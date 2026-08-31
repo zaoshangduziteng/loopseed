@@ -4,7 +4,7 @@ release/
 coverage/
 *.log
 .DS_Store
-.noobi-smoke/
+.loopseed-smoke/
 
 # Local credentials and machine-specific state
 .env*
@@ -15,6 +15,9 @@ coverage/
 *.pfx
 credentials*.json
 service-account*.json
-.noobi-private/
+.loopseed-private/
 *.tsbuildinfo
 *.tmp
+
+# Local design source; the optimized app asset lives under src/renderer/assets.
+/Frame 6.png

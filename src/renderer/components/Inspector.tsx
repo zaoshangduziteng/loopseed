@@ -1,7 +1,9 @@
 import {
+  AlertTriangle,
   Box,
   CheckCircle2,
   ChevronRight,
+  CirclePause,
   Code2,
   ExternalLink,
   Eye,
@@ -11,6 +13,7 @@ import {
   FolderOpen,
   Image as ImageIcon,
   Info,
+  LoaderCircle,
   Music2,
   PackageOpen,
   RefreshCw,
@@ -62,11 +65,13 @@ export function Inspector({ project, refreshSignal, onError }: InspectorProps) {
     : terminal
       ? 'is-error'
       : 'is-pending';
+  const previewState = previewEmptyState(project, loading);
+  const PreviewStateIcon = previewState.icon;
 
   const refresh = useCallback(async () => {
     setLoading(true);
     try {
-      setPayload(await window.noobi.inspectProject(project.id));
+      setPayload(await window.loopseed.inspectProject(project.id));
       setPreviewRevision((value) => value + 1);
     } catch (error) {
       onError(toMessage(error));
@@ -94,7 +99,7 @@ export function Inspector({ project, refreshSignal, onError }: InspectorProps) {
 
   useEffect(
     () =>
-      window.noobi.onAssetsChanged(({ projectId, assets }) => {
+      window.loopseed.onAssetsChanged(({ projectId, assets }) => {
         if (projectId !== project.id) return;
         setPayload((current) => ({ ...current, assets }));
         // Asset events do not carry the host-owned generation gate. Reinspect so
@@ -107,7 +112,7 @@ export function Inspector({ project, refreshSignal, onError }: InspectorProps) {
   async function openFile(relativePath: string) {
     try {
       setSelectedFile(
-        await window.noobi.readProjectFile(project.id, relativePath),
+        await window.loopseed.readProjectFile(project.id, relativePath),
       );
     } catch (error) {
       onError(toMessage(error));
@@ -118,7 +123,7 @@ export function Inspector({ project, refreshSignal, onError }: InspectorProps) {
     setAssetNotice(null);
     setImporting(true);
     try {
-      const assets = await window.noobi.importProjectAssets(project.id);
+      const assets = await window.loopseed.importProjectAssets(project.id);
       setPayload((current) => ({ ...current, assets }));
     } catch (error) {
       onError(toMessage(error));
@@ -143,7 +148,7 @@ export function Inspector({ project, refreshSignal, onError }: InspectorProps) {
     const ignoredCount = files.length - images.length;
     setImporting(true);
     try {
-      const assets = await window.noobi.importDroppedProjectAssets(project.id, images);
+      const assets = await window.loopseed.importDroppedProjectAssets(project.id, images);
       setPayload((current) => ({ ...current, assets }));
       setTab('assets');
       setAssetNotice({
@@ -287,24 +292,26 @@ export function Inspector({ project, refreshSignal, onError }: InspectorProps) {
           {payload.previewUrl ? (
             <iframe
               key={`${payload.previewUrl}:${previewRevision}`}
-              src={`${payload.previewUrl}?noobi=${previewRevision}`}
+              src={`${payload.previewUrl}?loopseed=${previewRevision}`}
               title={`${project.name} 游戏预览`}
               sandbox="allow-scripts allow-same-origin allow-pointer-lock"
             />
           ) : (
-            <div className="preview-empty">
-              <Eye size={28} />
-              <strong>等待可运行版本</strong>
-              <p>Agent 写入网页入口并通过检查后，游戏会在这里出现。</p>
-              <button className="secondary-button" type="button" onClick={() => void refresh()}>
-                <RefreshCw size={14} /> 重新检测
-              </button>
+            <div className={`preview-empty is-${previewState.tone}`} role="status" aria-live="polite">
+              <PreviewStateIcon size={28} className={loading ? 'spin' : ''} />
+              <strong>{previewState.title}</strong>
+              <p>{previewState.description}</p>
+              {!loading ? (
+                <button className="secondary-button" type="button" onClick={() => void refresh()}>
+                  <RefreshCw size={14} /> 重新检测
+                </button>
+              ) : null}
             </div>
           )}
           <footer className="inspector-footer">
             <button
               type="button"
-              onClick={() => void window.noobi.revealProject(project.id)}
+              onClick={() => void window.loopseed.revealProject(project.id)}
             >
               <FolderOpen size={13} /> 在 Finder 中显示
             </button>
@@ -340,7 +347,9 @@ export function Inspector({ project, refreshSignal, onError }: InspectorProps) {
                 />
               ))
             ) : (
-              <div className="file-empty">项目中暂无文件</div>
+              <div className="file-empty">
+                {loading ? <><LoaderCircle size={14} className="spin" /> 正在读取项目文件…</> : '项目中暂无文件'}
+              </div>
             )}
           </nav>
           <section className="code-viewer">
@@ -375,6 +384,60 @@ export function Inspector({ project, refreshSignal, onError }: InspectorProps) {
       )}
     </aside>
   );
+}
+
+function previewEmptyState(project: ProjectRecord, loading: boolean): {
+  title: string;
+  description: string;
+  tone: 'loading' | 'neutral' | 'warning' | 'critical';
+  icon: typeof Eye;
+} {
+  if (loading) {
+    return {
+      title: '正在检测项目输出',
+      description: 'LoopSeed 正在查找可运行入口、素材清单和项目文件。',
+      tone: 'loading',
+      icon: LoaderCircle,
+    };
+  }
+  if (project.status === 'draft') {
+    return {
+      title: '工作区已建立，还未开始制作',
+      description: '启动 Agent 后，第一个通过检查的可玩版本会自动出现在这里。',
+      tone: 'neutral',
+      icon: Eye,
+    };
+  }
+  if (project.status === 'running') {
+    return {
+      title: 'Agent 正在准备可玩版本',
+      description: '你可以继续观察左侧制作记录；检测到网页入口后会自动刷新。',
+      tone: 'loading',
+      icon: LoaderCircle,
+    };
+  }
+  if (project.status === 'failed') {
+    return {
+      title: '本轮没有生成可运行版本',
+      description: '工作区和已有文件均已保留。查看左侧失败原因，填写修复指令后再试。',
+      tone: 'critical',
+      icon: AlertTriangle,
+    };
+  }
+  if (project.status === 'stopped' || project.status === 'waiting') {
+    return {
+      title: project.status === 'waiting' ? '制作正在等待确认' : '制作已暂停',
+      description: '当前还没有可运行入口；继续制作后，LoopSeed 会再次自动检测。',
+      tone: 'warning',
+      icon: CirclePause,
+    };
+  }
+  return {
+    title: '未检测到游戏网页入口',
+    description: '本轮流程已结束，但项目中没有可预览入口。检查文件后继续制作并重新验证。',
+    tone: 'critical',
+    icon: AlertTriangle,
+  };
 }
 
 function AssetStudio({

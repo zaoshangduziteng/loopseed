@@ -536,8 +536,8 @@ export class CodexAppServer extends EventEmitter {
 
       const initialized = await peer.request<InitializeResponse>('initialize', {
         clientInfo: {
-          name: 'noobi_ai',
-          title: 'Noobi.ai Game Agent',
+          name: 'loopseed_ai',
+          title: 'LoopSeed Game Agent',
           version: '0.1.0',
         },
         capabilities: {

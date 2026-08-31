@@ -41,7 +41,7 @@ const TARGETS: Record<string, { packageName: string; triple: string; executable:
 
 export async function locateCodexBinary(): Promise<string> {
   const candidates: string[] = [];
-  if (process.env.NOOBI_CODEX_BIN) candidates.push(process.env.NOOBI_CODEX_BIN);
+  if (process.env.LOOPSEED_CODEX_BIN) candidates.push(process.env.LOOPSEED_CODEX_BIN);
 
   const target = TARGETS[`${process.platform}-${process.arch}`];
   if (target) {
@@ -79,7 +79,7 @@ export async function locateCodexBinary(): Promise<string> {
     }
   }
   throw new Error(
-    `Unable to locate a runnable Codex binary. Set NOOBI_CODEX_BIN. Checked ${failures.length} candidate(s).`,
+    `Unable to locate a runnable Codex binary. Set LOOPSEED_CODEX_BIN. Checked ${failures.length} candidate(s).`,
   );
 }
 

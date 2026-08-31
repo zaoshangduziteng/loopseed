@@ -12,7 +12,7 @@ afterEach(async () => {
 
 describe('EventLog', () => {
   it('merges persisted deltas by stable event id during bootstrap', async () => {
-    const root = await mkdtemp(join(tmpdir(), 'noobi-event-log-'));
+    const root = await mkdtemp(join(tmpdir(), 'loopseed-event-log-'));
     roots.push(root);
     const log = new EventLog(root);
     await log.init();
@@ -36,7 +36,7 @@ describe('EventLog', () => {
   });
 
   it('truncates oversized multibyte events into valid bounded JSONL without throwing synchronously', async () => {
-    const root = await mkdtemp(join(tmpdir(), 'noobi-event-log-'));
+    const root = await mkdtemp(join(tmpdir(), 'loopseed-event-log-'));
     roots.push(root);
     const log = new EventLog(root);
     await log.init();

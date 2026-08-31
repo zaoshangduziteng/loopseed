@@ -13,7 +13,7 @@ afterEach(async () => {
 
 describe('project infrastructure', () => {
   it('atomically reloads projects and rejects inspector traversal', async () => {
-    const root = await mkdtemp(join(tmpdir(), 'noobi-store-test-'));
+    const root = await mkdtemp(join(tmpdir(), 'loopseed-store-test-'));
     roots.push(root);
     const storageFile = join(root, 'data/projects.json');
     const workspace = join(root, 'games');
@@ -33,7 +33,7 @@ describe('project infrastructure', () => {
   });
 
   it('persists supported target frame rates, validates patches, and migrates legacy projects to 60 FPS', async () => {
-    const root = await mkdtemp(join(tmpdir(), 'noobi-fps-store-test-'));
+    const root = await mkdtemp(join(tmpdir(), 'loopseed-fps-store-test-'));
     roots.push(root);
     const storageFile = join(root, 'data/projects.json');
     const workspace = join(root, 'games');
@@ -92,14 +92,17 @@ describe('project infrastructure', () => {
 
     const legacyStore = new ProjectStore(legacyStorageFile, workspace);
     await expect(legacyStore.get('legacy-project')).resolves.toMatchObject({ targetFrameRate: 60 });
+    await expect(legacyStore.getSettings()).resolves.toMatchObject({ defaultTargetFrameRate: 60 });
     const migrated = JSON.parse(await readFile(legacyStorageFile, 'utf8')) as {
       projects: Array<{ targetFrameRate?: number }>;
+      settings: { defaultTargetFrameRate?: number };
     };
     expect(migrated.projects[0]?.targetFrameRate).toBe(60);
+    expect(migrated.settings.defaultTargetFrameRate).toBe(60);
   });
 
   it('serves the playable starter on loopback without blocking the Electron iframe', async () => {
-    const root = await mkdtemp(join(tmpdir(), 'noobi-preview-test-'));
+    const root = await mkdtemp(join(tmpdir(), 'loopseed-preview-test-'));
     roots.push(root);
     const store = new ProjectStore(join(root, 'projects.json'), join(root, 'games'));
     const project = await store.create({
@@ -122,7 +125,7 @@ describe('project infrastructure', () => {
   });
 
   it('mirrors Vite public asset URLs while using the source fallback', async () => {
-    const root = await mkdtemp(join(tmpdir(), 'noobi-preview-assets-test-'));
+    const root = await mkdtemp(join(tmpdir(), 'loopseed-preview-assets-test-'));
     roots.push(root);
     const store = new ProjectStore(join(root, 'projects.json'), join(root, 'games'));
     const project = await store.create({
@@ -153,7 +156,7 @@ describe('project infrastructure', () => {
   });
 
   it('serves fresh public media ahead of dist while keeping documents and scripts in dist', async () => {
-    const root = await mkdtemp(join(tmpdir(), 'noobi-preview-fresh-assets-test-'));
+    const root = await mkdtemp(join(tmpdir(), 'loopseed-preview-fresh-assets-test-'));
     roots.push(root);
     const store = new ProjectStore(join(root, 'projects.json'), join(root, 'games'));
     const project = await store.create({
@@ -194,7 +197,7 @@ describe('project infrastructure', () => {
   });
 
   it('does not fall back to dist when a public media path escapes through a symlink', async () => {
-    const root = await mkdtemp(join(tmpdir(), 'noobi-preview-symlink-assets-test-'));
+    const root = await mkdtemp(join(tmpdir(), 'loopseed-preview-symlink-assets-test-'));
     roots.push(root);
     const store = new ProjectStore(join(root, 'projects.json'), join(root, 'games'));
     const project = await store.create({

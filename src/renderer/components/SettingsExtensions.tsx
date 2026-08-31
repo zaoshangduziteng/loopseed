@@ -285,7 +285,7 @@ const PROVIDERS: Record<MediaCapability, ProviderPreset[]> = {
 export function useExtensionSettings(onMessage: (message: string) => void) {
   const [snapshot, setSnapshot] = useState(EMPTY_SNAPSHOT);
   const [loading, setLoading] = useState(true);
-  const api = window.noobi as typeof window.noobi & OptionalExtensionsApi;
+  const api = window.loopseed as typeof window.loopseed & OptionalExtensionsApi;
   const supported = typeof api.getExtensionSettings === 'function';
 
   useEffect(() => {
@@ -719,25 +719,25 @@ export function SkillsSettings({ controller }: { controller: ExtensionSettingsCo
       </div>
       <div className="extension-list" aria-live="polite">
         {skills.map((item) => {
-          const requiredByNoobi = item.name.trim().toLowerCase() === 'imagegen';
+          const requiredByLoopSeed = item.name.trim().toLowerCase() === 'imagegen';
           return (
-            <article className={`extension-row${requiredByNoobi ? ' is-required' : ''}`} key={item.id}>
+            <article className={`extension-row${requiredByLoopSeed ? ' is-required' : ''}`} key={item.id}>
               <span className="extension-glyph"><FileCode2 size={16} /></span>
               <div className="extension-copy">
                 <div>
                   <strong>{item.name}</strong>
                   <span className={`source-badge source-${item.source}`}>{sourceLabel(item.source)}</span>
-                  {requiredByNoobi ? <span className="source-badge noobi-required-badge">LOOPSEED CORE</span> : null}
+                  {requiredByLoopSeed ? <span className="source-badge loopseed-required-badge">LOOPSEED CORE</span> : null}
                 </div>
-                <p>{requiredByNoobi ? 'LoopSeed 的默认图片生成与 API 失败回退依赖此 Skill；游戏制作流程中始终保持启用。' : item.description || '此 Skill 未提供说明。'}</p>
+                <p>{requiredByLoopSeed ? 'LoopSeed 的默认图片生成与 API 失败回退依赖此 Skill；游戏制作流程中始终保持启用。' : item.description || '此 Skill 未提供说明。'}</p>
                 {item.path ? <code title={item.path}>{item.path}</code> : null}
               </div>
-              <label className="switch-control compact-switch" title={requiredByNoobi ? 'LoopSeed 游戏制作必需，无法在这里停用' : undefined}>
-                <span className="sr-only">{requiredByNoobi ? `${item.name} 是 LoopSeed 必需 Skill，始终启用` : `${item.enabled ? '停用' : '启用'} ${item.name}`}</span>
+              <label className="switch-control compact-switch" title={requiredByLoopSeed ? 'LoopSeed 游戏制作必需，无法在这里停用' : undefined}>
+                <span className="sr-only">{requiredByLoopSeed ? `${item.name} 是 LoopSeed 必需 Skill，始终启用` : `${item.enabled ? '停用' : '启用'} ${item.name}`}</span>
                 <input
                   type="checkbox"
-                  checked={requiredByNoobi || item.enabled}
-                  disabled={requiredByNoobi || !controller.supported || pending === item.id}
+                  checked={requiredByLoopSeed || item.enabled}
+                  disabled={requiredByLoopSeed || !controller.supported || pending === item.id}
                   onChange={() => void toggle(item)}
                 />
                 <span aria-hidden="true" />

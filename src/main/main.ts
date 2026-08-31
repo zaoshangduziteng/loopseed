@@ -73,15 +73,18 @@ import { PromptTemplateStore } from './promptTemplateStore.js';
 import { synchronizeWorkspaceHostPolicy } from './workspaceTemplate.js';
 
 const moduleDirectory = dirname(fileURLToPath(import.meta.url));
-const smokeCapture = process.env.NOOBI_SMOKE_CAPTURE?.trim() || null;
+const smokeCapture = process.env.LOOPSEED_SMOKE_CAPTURE?.trim() || null;
 const smokeWidth = smokeCapture
-  ? Math.max(480, Number.parseInt(process.env.NOOBI_SMOKE_WIDTH ?? '', 10) || 1510)
+  ? Math.max(480, Number.parseInt(process.env.LOOPSEED_SMOKE_WIDTH ?? '', 10) || 1510)
   : 1510;
 const smokeHeight = smokeCapture
-  ? Math.max(620, Number.parseInt(process.env.NOOBI_SMOKE_HEIGHT ?? '', 10) || 940)
+  ? Math.max(620, Number.parseInt(process.env.LOOPSEED_SMOKE_HEIGHT ?? '', 10) || 940)
   : 940;
-if (smokeCapture) app.setPath('userData', resolve('.noobi-smoke/user-data'));
-else app.setPath('userData', join(app.getPath('appData'), 'Noobi.ai'));
+if (smokeCapture) {
+  app.setPath('userData', resolve('.loopseed-smoke/user-data'));
+} else {
+  app.setPath('userData', join(app.getPath('appData'), 'LoopSeed'));
+}
 
 app.setName('LoopSeed');
 
@@ -112,7 +115,7 @@ if (!hasSingleInstanceLock) {
   app.exit(0);
 } else {
   void app.whenReady().then(launch).catch((error) => {
-    if (smokeCapture) process.stderr.write(`Noobi UI smoke failed: ${asError(error).message}\n`);
+    if (smokeCapture) process.stderr.write(`LoopSeed UI smoke failed: ${asError(error).message}\n`);
     else dialog.showErrorBox('LoopSeed 无法启动', asError(error).message);
     app.exit(1);
   });
@@ -191,7 +194,7 @@ async function launch(): Promise<void> {
       return { id: project.id, root: project.root };
     },
     onAssetsChanged: (projectId, assets) => {
-      broadcast('noobi:event:assets', { projectId, assets });
+      broadcast('loopseed:event:assets', { projectId, assets });
     },
     onGeneratedAsset: async (projectId, asset, provider) => {
       const isImage = asset.kind === 'image';
@@ -238,7 +241,7 @@ async function createWindow(): Promise<void> {
     height: smokeHeight,
     minWidth: smokeCapture ? Math.min(760, smokeWidth) : 760,
     minHeight: 620,
-    backgroundColor: '#3c315b',
+    backgroundColor: '#f7f7f8',
     title: 'LoopSeed',
     show: false,
     webPreferences: {
@@ -263,7 +266,7 @@ async function createWindow(): Promise<void> {
     if (mainWindow === window) mainWindow = null;
   });
 
-  const rendererUrl = process.env.NOOBI_RENDERER_URL;
+  const rendererUrl = process.env.LOOPSEED_RENDERER_URL;
   if (rendererUrl) await window.loadURL(rendererUrl);
   else await window.loadFile(join(moduleDirectory, '../renderer/index.html'));
 
@@ -273,10 +276,10 @@ async function createWindow(): Promise<void> {
 function bindRuntimeEvents(): void {
   runtime.on('status', (status) => {
     if (status.state !== 'ready') approvalBroker.invalidateAll();
-    broadcast('noobi:event:runtime', runtimeStatusForUi(status));
+    broadcast('loopseed:event:runtime', runtimeStatusForUi(status));
   });
   runtime.on('diagnostic', (message: string) => {
-    if (process.env.NOOBI_DEBUG === '1') process.stderr.write(`[codex] ${message}\n`);
+    if (process.env.LOOPSEED_DEBUG === '1') process.stderr.write(`[codex] ${message}\n`);
   });
   runtime.on('serverRequest', (request) => {
     if (!mediaToolBroker.handle(request)) approvalBroker.handle(request);
@@ -292,7 +295,7 @@ function bindRuntimeEvents(): void {
     if (!route) return;
     if (route.role === 'implementer' && notification.method === 'item/completed') {
       const task = ingestGeneratedImage(notification, route.projectId).catch((error) => {
-        if (process.env.NOOBI_DEBUG === '1') {
+        if (process.env.LOOPSEED_DEBUG === '1') {
           process.stderr.write(`[assets] ${asError(error).message}\n`);
         }
       });
@@ -304,10 +307,10 @@ function bindRuntimeEvents(): void {
     }).catch(() => undefined);
   });
 
-  approvalBroker.on('approval', (approval) => broadcast('noobi:event:approval', approval));
-  approvalBroker.on('closed', (token: string) => broadcast('noobi:event:approval-closed', token));
+  approvalBroker.on('approval', (approval) => broadcast('loopseed:event:approval', approval));
+  approvalBroker.on('closed', (token: string) => broadcast('loopseed:event:approval-closed', token));
   approvalBroker.on('diagnostic', (message: string) => {
-    if (process.env.NOOBI_DEBUG === '1') process.stderr.write(`[approval] ${message}\n`);
+    if (process.env.LOOPSEED_DEBUG === '1') process.stderr.write(`[approval] ${message}\n`);
   });
   approvalBroker.on('expired', (approval) => {
     if (!approval.projectId) return;
@@ -360,7 +363,7 @@ function bindHarnessEvents(): void {
 }
 
 function bindIpc(): void {
-  handle('noobi:bootstrap', async (): Promise<BootstrapPayload> => {
+  handle('loopseed:bootstrap', async (): Promise<BootstrapPayload> => {
     const projects = await projectStore.list();
     const settings = await projectStore.getSettings();
     await runtime.start().catch(() => runtime.status);
@@ -370,16 +373,16 @@ function bindIpc(): void {
     return { projects, settings, runtime: runtimeStatusForUi(runtime.status), events };
   });
 
-  handle('noobi:runtime:refresh', async () => runtimeStatusForUi(await runtime.refresh()));
-  handle('noobi:runtime:login', async () => {
+  handle('loopseed:runtime:refresh', async () => runtimeStatusForUi(await runtime.refresh()));
+  handle('loopseed:runtime:login', async () => {
     const result = await runtime.startLogin();
     if (result.authUrl && /^https:\/\//iu.test(result.authUrl)) {
       await shell.openExternal(result.authUrl);
     }
     return result;
   });
-  handle('noobi:runtime:logout', async () => runtimeStatusForUi(await runtime.logout()));
-  handle('noobi:dialog:directory', async () => {
+  handle('loopseed:runtime:logout', async () => runtimeStatusForUi(await runtime.logout()));
+  handle('loopseed:dialog:directory', async () => {
     const settings = await projectStore.getSettings();
     const options: Electron.OpenDialogOptions = {
       title: '选择游戏项目目录',
@@ -392,7 +395,7 @@ function bindIpc(): void {
     return result.canceled ? null : result.filePaths[0] ?? null;
   });
 
-  handle('noobi:project:create', async (_event, input: CreateProjectInput) => {
+  handle('loopseed:project:create', async (_event, input: CreateProjectInput) => {
     const project = await projectStore.create(input);
     const initialEvent: AgentEvent = {
       id: randomUUID(),
@@ -405,11 +408,11 @@ function bindIpc(): void {
       method: 'project/created',
     };
     emitAgentEvent(initialEvent);
-    broadcast('noobi:event:project', project);
+    broadcast('loopseed:event:project', project);
     return project;
   });
 
-  handle('noobi:project:run', async (_event, input: RunProjectInput) => {
+  handle('loopseed:project:run', async (_event, input: RunProjectInput) => {
     validateRunInput(input);
     const project = await projectStore.get(input.projectId);
     if (harness.isRunning(project.id)) throw new Error('该项目已有正在执行的 Agent');
@@ -491,7 +494,7 @@ function bindIpc(): void {
     return running;
   });
 
-  handle('noobi:project:stop', async (_event, projectId: string) => {
+  handle('loopseed:project:stop', async (_event, projectId: string) => {
     validateProjectId(projectId);
     await harness.stop(projectId);
     const project = await projectStore.get(projectId);
@@ -499,12 +502,12 @@ function bindIpc(): void {
       ? updateProject(projectId, { status: 'stopped', activeTurnId: null })
       : project;
   });
-  handle('noobi:project:reveal', async (_event, projectId: string) => {
+  handle('loopseed:project:reveal', async (_event, projectId: string) => {
     const project = await projectStore.get(validateProjectId(projectId));
     const error = await shell.openPath(project.root);
     if (error) throw new Error(error);
   });
-  handle('noobi:project:assets:import', async (_event, projectId: string) => {
+  handle('loopseed:project:assets:import', async (_event, projectId: string) => {
     const project = await projectStore.get(validateProjectId(projectId));
     if (harness.isRunning(project.id)) {
       throw new Error('Agent 正在写入项目，请等待当前任务结束后再导入素材');
@@ -528,7 +531,7 @@ function bindIpc(): void {
     }
     return importProjectAssetPaths(project, result.filePaths, '图像、音频或 3D 素材');
   });
-  handle('noobi:project:assets:import-paths', async (_event, projectId: string, paths: unknown) => {
+  handle('loopseed:project:assets:import-paths', async (_event, projectId: string, paths: unknown) => {
     const project = await projectStore.get(validateProjectId(projectId));
     if (harness.isRunning(project.id)) {
       throw new Error('Agent 正在写入项目，请等待当前任务结束后再拖入图片');
@@ -547,7 +550,7 @@ function bindIpc(): void {
     });
     return importProjectAssetPaths(project, imagePaths, '拖入图片');
   });
-  handle('noobi:project:inspect', async (_event, projectId: string): Promise<ProjectInspectorPayload> => {
+  handle('loopseed:project:inspect', async (_event, projectId: string): Promise<ProjectInspectorPayload> => {
     const project = await projectStore.get(validateProjectId(projectId));
     const [files, previewUrl, assets] = await Promise.all([
       projectStore.listProjectFiles(project.id),
@@ -559,17 +562,17 @@ function bindIpc(): void {
     );
     return { files, previewUrl, assets, imageGenerationGate };
   });
-  handle('noobi:project:read', (_event, projectId: string, relativePath: string) => {
+  handle('loopseed:project:read', (_event, projectId: string, relativePath: string) => {
     validateProjectId(projectId);
     if (typeof relativePath !== 'string' || relativePath.length > 4_000) {
       throw new Error('无效的项目文件路径');
     }
     return projectStore.readProjectFile(projectId, relativePath);
   });
-  handle('noobi:settings:save', (_event, patch: Partial<AppSettings>) =>
+  handle('loopseed:settings:save', (_event, patch: Partial<AppSettings>) =>
     projectStore.saveSettings(validateSettingsPatch(patch)),
   );
-  handle('noobi:extensions:get', async (): Promise<ExtensionSettingsSnapshot> => {
+  handle('loopseed:extensions:get', async (): Promise<ExtensionSettingsSnapshot> => {
     const [skills, mcpServers, promptTemplates] = await Promise.all([
       listSkillSettings(),
       listMcpSettings(),
@@ -582,7 +585,7 @@ function bindIpc(): void {
       promptTemplates,
     };
   });
-  handle('noobi:media-provider:save', async (_event, input: SaveMediaProviderInput) => {
+  handle('loopseed:media-provider:save', async (_event, input: SaveMediaProviderInput) => {
     const normalized = validateMediaProviderInput(input);
     // Reuse secrets only for the exact same preset. Carrying an omitted key
     // from one vendor to another could disclose it to the wrong endpoint.
@@ -601,10 +604,10 @@ function bindIpc(): void {
       setActive: normalized.enabled,
     });
     mediaProviderTests.delete(normalized.capability);
-    broadcast('noobi:event:runtime', runtimeStatusForUi(runtime.status));
+    broadcast('loopseed:event:runtime', runtimeStatusForUi(runtime.status));
     return mediaProviderSetting(saved);
   });
-  handle('noobi:media-provider:test', async (_event, capability: MediaCapability) => {
+  handle('loopseed:media-provider:test', async (_event, capability: MediaCapability) => {
     const kind = validateMediaCapability(capability);
     const started = Date.now();
     const provider = activeMediaProvider(kind);
@@ -638,8 +641,8 @@ function bindIpc(): void {
     mediaProviderTests.set(kind, result);
     return result;
   });
-  handle('noobi:skills:list', () => listSkillSettings());
-  handle('noobi:skills:set-enabled', async (_event, input: { id: string; enabled: boolean }) => {
+  handle('loopseed:skills:list', () => listSkillSettings());
+  handle('loopseed:skills:set-enabled', async (_event, input: { id: string; enabled: boolean }) => {
     if (!input || typeof input !== 'object' || typeof input.id !== 'string' || typeof input.enabled !== 'boolean') {
       throw new Error('无效的 Skill 设置');
     }
@@ -657,25 +660,25 @@ function bindIpc(): void {
     if (!result) throw new Error('Skill 状态刷新失败');
     return result;
   });
-  handle('noobi:mcp:list', () => listMcpSettings());
-  handle('noobi:mcp:save', async (_event, input: SaveMcpServerInput) => {
+  handle('loopseed:mcp:list', () => listMcpSettings());
+  handle('loopseed:mcp:save', async (_event, input: SaveMcpServerInput) => {
     await mcpConfigManager.save(input);
     const result = (await listMcpSettings()).find((server) => server.id === input.id);
     if (!result) throw new Error('MCP Server 保存后未出现在 Codex 配置中');
     return result;
   });
-  handle('noobi:mcp:remove', async (_event, id: string) => {
+  handle('loopseed:mcp:remove', async (_event, id: string) => {
     await mcpConfigManager.remove(id);
   });
-  handle('noobi:prompts:list', () => listPromptSettings());
-  handle('noobi:prompts:save', async (_event, input: {
+  handle('loopseed:prompts:list', () => listPromptSettings());
+  handle('loopseed:prompts:save', async (_event, input: {
     id: PromptTemplateId;
     content: string;
     enabled: boolean;
   }) => promptTemplateStore.save(input));
-  handle('noobi:prompts:reset', (_event, id: PromptTemplateId) => promptTemplateStore.reset(id));
+  handle('loopseed:prompts:reset', (_event, id: PromptTemplateId) => promptTemplateStore.reset(id));
   handle(
-    'noobi:approval:resolve',
+    'loopseed:approval:resolve',
     (_event, token: string, decision: ApprovalDecision, answers?: ApprovalAnswers): void => {
       if (typeof token !== 'string' || token.length > 200) throw new Error('无效的审批令牌');
       if (!['accept', 'acceptForSession', 'decline', 'cancel'].includes(decision)) {
@@ -693,7 +696,7 @@ async function importProjectAssetPaths(
 ): Promise<GameAssetRecord[]> {
   await assetStore.importFiles(project.id, project.root, [...paths]);
   const assets = await assetStore.list(project.id, project.root);
-  broadcast('noobi:event:assets', { projectId: project.id, assets });
+  broadcast('loopseed:event:assets', { projectId: project.id, assets });
   emitAgentEvent({
     id: randomUUID(),
     projectId: project.id,
@@ -938,7 +941,7 @@ async function executeHarness(
           : audioVerification.reason === 'asset-mismatch'
             ? '当前音频文件的路径或 SHA-256 与宿主 MiniMax 生成证明不匹配'
             : '受信 MiniMax 音乐的完整资源路径没有出现在生产源码或构建产物中';
-        const message = `强制 MiniMax 音乐校验失败：${detail}。任务不能标记为完成；请调用 noobi_audio_generate（purpose=music），保留宿主入库音频，并由游戏生产代码实际加载播放。`;
+        const message = `强制 MiniMax 音乐校验失败：${detail}。任务不能标记为完成；请调用 loopseed_audio_generate（purpose=music），保留宿主入库音频，并由游戏生产代码实际加载播放。`;
         emitAgentEvent({
           id: randomUUID(),
           projectId: project.id,
@@ -1080,7 +1083,7 @@ async function ingestGeneratedImage(
     provider: 'codex-imagegen',
   });
   const assets = await assetStore.list(projectId, project.root);
-  broadcast('noobi:event:assets', { projectId, assets });
+  broadcast('loopseed:event:assets', { projectId, assets });
   emitAgentEvent({
     id: randomUUID(),
     projectId,
@@ -1098,15 +1101,15 @@ async function updateProject(
   patch: Parameters<ProjectStore['update']>[1],
 ): Promise<ProjectRecord> {
   const project = await projectStore.update(projectId, patch);
-  broadcast('noobi:event:project', project);
+  broadcast('loopseed:event:project', project);
   return project;
 }
 
 function emitAgentEvent(event: AgentEvent): void {
   void eventLog.append(event).catch((error) => {
-    if (process.env.NOOBI_DEBUG === '1') process.stderr.write(`[event-log] ${asError(error).message}\n`);
+    if (process.env.LOOPSEED_DEBUG === '1') process.stderr.write(`[event-log] ${asError(error).message}\n`);
   });
-  broadcast('noobi:event:agent', event);
+  broadcast('loopseed:event:agent', event);
 }
 
 function handle(
@@ -1125,7 +1128,7 @@ function assertTrustedRenderer(event: IpcMainInvokeEvent): void {
     throw new Error('Rejected IPC from an untrusted renderer');
   }
   const source = event.senderFrame.url;
-  const expected = process.env.NOOBI_RENDERER_URL;
+  const expected = process.env.LOOPSEED_RENDERER_URL;
   if (expected ? !source.startsWith(expected) : !source.startsWith('file:')) {
     throw new Error('Rejected IPC from an unexpected origin');
   }
@@ -1152,7 +1155,38 @@ async function captureSmoke(window: BrowserWindow, target: string): Promise<void
     `Boolean(document.querySelector('.app-shell')) && !document.querySelector('.loading-error')`,
     true,
   ) as boolean;
-  if (!healthy) throw new Error('Renderer did not reach the Noobi workbench');
+  if (!healthy) throw new Error('Renderer did not reach the LoopSeed workbench');
+  const collapsedBrandAlignment = await window.webContents.executeJavaScript(
+    `(async () => {
+      const shell = document.querySelector('.app-shell');
+      const rail = document.querySelector('.project-rail');
+      const brand = document.querySelector('.brand-mark');
+      if (!(shell instanceof HTMLElement) || !(rail instanceof HTMLElement) || !(brand instanceof HTMLElement)) {
+        return null;
+      }
+      shell.classList.add('is-rail-collapsed');
+      await new Promise((resolvePromise) => setTimeout(resolvePromise, 240));
+      const railRect = rail.getBoundingClientRect();
+      const brandRect = brand.getBoundingClientRect();
+      return {
+        offset: Math.abs(
+          (brandRect.left + brandRect.width / 2)
+          - (railRect.left + railRect.width / 2)
+        ),
+        contained: brandRect.left >= railRect.left && brandRect.right <= railRect.right,
+      };
+    })()`,
+    true,
+  ) as { offset: number; contained: boolean } | null;
+  if (
+    !collapsedBrandAlignment
+    || !collapsedBrandAlignment.contained
+    || collapsedBrandAlignment.offset > 1
+  ) {
+    throw new Error(
+      `Collapsed rail brand is misaligned (${collapsedBrandAlignment?.offset ?? 'missing'}px)`,
+    );
+  }
   await window.webContents.executeJavaScript(
     `document.querySelectorAll('.brief-card footer > span').forEach((node) => {
       node.textContent = 'LOCAL WORKSPACE / signal-garden';
@@ -1165,7 +1199,7 @@ async function captureSmoke(window: BrowserWindow, target: string): Promise<void
   await mkdir(dirname(output), { recursive: true });
   const { writeFile } = await import('node:fs/promises');
   await writeFile(output, image.toPNG());
-  process.stdout.write(`Noobi UI smoke captured ${output}\n`);
+  process.stdout.write(`LoopSeed UI smoke captured ${output}\n`);
   app.quit();
 }
 
@@ -1247,7 +1281,13 @@ function validateProjectId(value: string): string {
 
 function validateSettingsPatch(value: Partial<AppSettings>): Partial<AppSettings> {
   if (!value || typeof value !== 'object' || Array.isArray(value)) throw new Error('无效的设置');
-  const allowed = new Set(['defaultWorkspace', 'defaultModel', 'defaultEffort', 'theme']);
+  const allowed = new Set([
+    'defaultWorkspace',
+    'defaultModel',
+    'defaultEffort',
+    'defaultTargetFrameRate',
+    'theme',
+  ]);
   for (const key of Object.keys(value)) if (!allowed.has(key)) throw new Error(`未知设置：${key}`);
   return value;
 }

@@ -18,14 +18,14 @@ export type WorkspaceProject = Pick<
   'id' | 'name' | 'idea' | 'createdAt' | 'model' | 'targetFrameRate'
 >;
 
-export const NOOBI_HOST_RUNTIME_POLICY_START = '<!-- NOOBI:HOST-RUNTIME-POLICY:START -->';
-export const NOOBI_HOST_RUNTIME_POLICY_END = '<!-- NOOBI:HOST-RUNTIME-POLICY:END -->';
-export const NOOBI_HOST_RUNTIME_POLICY_VERSION = 2;
+export const LOOPSEED_HOST_RUNTIME_POLICY_START = '<!-- LOOPSEED:HOST-RUNTIME-POLICY:START -->';
+export const LOOPSEED_HOST_RUNTIME_POLICY_END = '<!-- LOOPSEED:HOST-RUNTIME-POLICY:END -->';
+export const LOOPSEED_HOST_RUNTIME_POLICY_VERSION = 2;
 
 const HOST_POLICY_FILES = {
-  metadata: '.noobi/project.json',
+  metadata: '.loopseed/project.json',
   agents: 'AGENTS.md',
-  skill: '.codex/skills/noobi-game-builder/SKILL.md',
+  skill: '.codex/skills/loopseed-game-builder/SKILL.md',
 } as const;
 const MAX_HOST_POLICY_FILE_BYTES = 2 * 1024 * 1024;
 const READ_ONLY_NOFOLLOW = constants.O_RDONLY | (constants.O_NOFOLLOW ?? 0);
@@ -119,15 +119,15 @@ function workspaceFiles(project: WorkspaceProject): Record<string, string> {
     createdAt: project.createdAt,
     model: project.model,
     targetFrameRate: project.targetFrameRate,
-    starter: 'noobi-browser-game',
+    starter: 'loopseed-browser-game',
   };
 
   return {
     '.gitignore': ['node_modules/', '.DS_Store', '*.log', '.env', '.env.*', '!.env.example', ''].join(
       '\n',
     ),
-    '.noobi/project.json': `${JSON.stringify(metadata, null, 2)}\n`,
-    '.codex/skills/noobi-game-builder/SKILL.md': gameBuilderSkill(project),
+    '.loopseed/project.json': `${JSON.stringify(metadata, null, 2)}\n`,
+    '.codex/skills/loopseed-game-builder/SKILL.md': gameBuilderSkill(project),
     'public/assets/asset-pack.json': `${JSON.stringify(
       {
         version: 1,
@@ -183,7 +183,7 @@ function workspaceFiles(project: WorkspaceProject): Record<string, string> {
 }
 
 function projectAgents(project: WorkspaceProject): string {
-  const content = `# Noobi.ai Game Project
+  const content = `# LoopSeed Game Project
 
 ## Product goal
 
@@ -213,24 +213,24 @@ Build and iteratively improve a playable game based on this brief:
 
 ## Asset pipeline
 
-- A host-trusted generated image is required for every Noobi.ai game. Follow the current host prompt: call \`noobi_image_generate\` when a configured image API is active and follow its Codex ImageGen fallback instruction otherwise. The accepted result must exist under \`public/assets/images/\`, be registered in the manifest, and be visibly loaded by the running game before the task can complete. Manifest provider text alone is never generation proof.
+- A host-trusted generated image is required for every LoopSeed game. Follow the current host prompt: call \`loopseed_image_generate\` when a configured image API is active and follow its Codex ImageGen fallback instruction otherwise. The accepted result must exist under \`public/assets/images/\`, be registered in the manifest, and be visibly loaded by the running game before the task can complete. Manifest provider text alone is never generation proof.
 - Treat animation generation as a separate three-state decision from the general host-trusted image-generation gate. Use \`generate\` only when the required animation asset is absent or this run changes its states, style, scale, frame geometry, anchor, or view; use \`reuse\` only after verifying existing multi-pose frames, a sprite sheet, or a real rigged-GLB animation clip and its playback code; use \`not-needed\` only when pose/form changes do not benefit the requested result.
-- For 2D/2.5D \`generate\`, call \`noobi_image_generate\` and follow its Codex ImageGen fallback when needed; lock subject design, style, palette, scale, frame dimensions, anchor, and view/camera angle across keyframes or a sprite sheet. For actual 3D, use \`noobi_model3d_generate\` when configured or integrate a real animation clip from a self-contained rigged GLB; generated reference art cannot substitute for or prove a 3D clip.
+- For 2D/2.5D \`generate\`, call \`loopseed_image_generate\` and follow its Codex ImageGen fallback when needed; lock subject design, style, palette, scale, frame dimensions, anchor, and view/camera angle across keyframes or a sprite sheet. For actual 3D, use \`loopseed_model3d_generate\` when configured or integrate a real animation clip from a self-contained rigged GLB; generated reference art cannot substitute for or prove a 3D clip.
 - A \`reuse\` assessment must cite exact project-relative asset and playback-code paths and prove at least two different poses or the required GLB clip. Do not regenerate an already suitable animation asset merely because a new run started. A \`not-needed\` assessment must state the concrete reason and still provide visible programmatic motion or responsive feedback tied to input or game state.
 - Animation generation and reuse must follow the ${project.targetFrameRate} FPS contract above. Asset sample rate may be lower than render rate, but its metadata, duration, and deterministic playback must prove motion quality at the selected target.
 - A Canvas, SVG, CSS, or procedural-geometry renderer does not waive the generated-image requirement. Programmatic visuals may support the art direction or act as load-failure fallbacks, but they cannot replace the host-attested generated image.
 - If both the configured image API and Codex ImageGen fallback are unavailable, or output cannot be ingested and used, report the task as blocked. Do not claim completion.
 - Never use an image straight from a Codex home, temporary, or absolute path. Never embed raw base64 generation output in source, logs, or the manifest.
-- Register workspace assets with \`noobi_asset_register\` when available. Otherwise update \`public/assets/asset-pack.json\` with the real relative path, MIME type, byte size, SHA-256, source, and creation time; do not invent metadata.
-- Every \`noobi_audio_generate\` call must set an explicit \`purpose\`: \`music\`, \`speech\`, \`vocal-sfx\`, \`sfx\`, or \`ambience\`. With MiniMax, use \`music\` for the Music model and \`speech\`/\`vocal-sfx\` for the Speech model; music may also set \`instrumental\` and \`lyrics\`. For nonverbal \`vocal-sfx\`, send supported Speech 2.8 tags such as \`(groans)\`, \`(gasps)\`, \`(breath)\`, or \`(hissing)\` instead of descriptive prose. MiniMax accepts MP3/WAV and playback duration is controlled in game code, not with \`durationSeconds\`.
-- Do not claim MiniMax generates generic game SFX or ambience such as gunshots, explosions, impacts, footsteps, wind, or room tone. For \`sfx\` and \`ambience\`, follow the tool's \`procedural-audio\` result with \`noobi_audio_synthesize\`, deterministic Web Audio, or an imported WAV/MP3/OGG. Include mute and volume controls once the game has persistent audio.
-- For 3D assets, call \`noobi_model3d_generate\` when an API is configured. Otherwise use self-contained GLB 2.0 files or deliberate procedural Three.js geometry; reject external buffers/textures and never label a primitive placeholder as a generated model.
+- Register workspace assets with \`loopseed_asset_register\` when available. Otherwise update \`public/assets/asset-pack.json\` with the real relative path, MIME type, byte size, SHA-256, source, and creation time; do not invent metadata.
+- Every \`loopseed_audio_generate\` call must set an explicit \`purpose\`: \`music\`, \`speech\`, \`vocal-sfx\`, \`sfx\`, or \`ambience\`. With MiniMax, use \`music\` for the Music model and \`speech\`/\`vocal-sfx\` for the Speech model; music may also set \`instrumental\` and \`lyrics\`. For nonverbal \`vocal-sfx\`, send supported Speech 2.8 tags such as \`(groans)\`, \`(gasps)\`, \`(breath)\`, or \`(hissing)\` instead of descriptive prose. MiniMax accepts MP3/WAV and playback duration is controlled in game code, not with \`durationSeconds\`.
+- Do not claim MiniMax generates generic game SFX or ambience such as gunshots, explosions, impacts, footsteps, wind, or room tone. For \`sfx\` and \`ambience\`, follow the tool's \`procedural-audio\` result with \`loopseed_audio_synthesize\`, deterministic Web Audio, or an imported WAV/MP3/OGG. Include mute and volume controls once the game has persistent audio.
+- For 3D assets, call \`loopseed_model3d_generate\` when an API is configured. Otherwise use self-contained GLB 2.0 files or deliberate procedural Three.js geometry; reject external buffers/textures and never label a primitive placeholder as a generated model.
 - Keep image, audio, and model loading failure-tolerant so one missing asset cannot produce a blank screen.
 
 ## Engineering boundaries
 
 - Stay inside this workspace. Do not read or write credentials, global config, or unrelated directories.
-- Never edit \`.noobi/project.json\`; it is owned by the Noobi.ai host.
+- Never edit \`.loopseed/project.json\`; it is owned by the LoopSeed host.
 - Do not fabricate asset generation, test, or build results.
 - Ask before destructive operations, dependency installation, network access, or opening external applications.
 - Keep secrets out of source, logs, screenshots, and generated assets.
@@ -239,18 +239,18 @@ Build and iteratively improve a playable game based on this brief:
 
 ## Project-local skill
 
-Use \`.codex/skills/noobi-game-builder/SKILL.md\` for the detailed game-production loop.
+Use \`.codex/skills/loopseed-game-builder/SKILL.md\` for the detailed game-production loop.
 `;
   return placeManagedRuntimePolicy(content, project.targetFrameRate, false);
 }
 
 function gameBuilderSkill(project: WorkspaceProject): string {
   const content = `---
-name: noobi-game-builder
-description: Build, verify, and iterate a small playable browser game in a Noobi.ai project.
+name: loopseed-game-builder
+description: Build, verify, and iterate a small playable browser game in a LoopSeed project.
 ---
 
-# Noobi Game Builder
+# LoopSeed Game Builder
 
 Use this skill for new games and gameplay, level, UI, asset, audio, or verification changes.
 
@@ -296,9 +296,9 @@ Set explicit budgets for texture dimensions, concurrent sounds, model count, tri
 ## 3. Produce and integrate assets
 
 - Read \`public/assets/asset-pack.json\` before creating duplicates.
-- Image generation is mandatory, even when the brief does not explicitly request bitmap art. Read the manifest and current host attestation first; call \`noobi_image_generate\` for the configured API route and follow its \`codex-imagegen\` fallback instruction when no API is active. Select a coherent art direction, keep prompts specific to in-game use, and ensure the accepted output is ingested into \`public/assets/images/\`.
+- Image generation is mandatory, even when the brief does not explicitly request bitmap art. Read the manifest and current host attestation first; call \`loopseed_image_generate\` for the configured API route and follow its \`codex-imagegen\` fallback instruction when no API is active. Select a coherent art direction, keep prompts specific to in-game use, and ensure the accepted output is ingested into \`public/assets/images/\`.
 - Register the accepted image, reference its project-relative path from production code, and verify that it is visibly rendered in the running game. A generated file that is unused does not satisfy the requirement.
-- For 2D/2.5D generation=\`generate\`, call \`noobi_image_generate\` and use Codex ImageGen only when that tool returns its fallback, producing at least two distinct keyframes or one sprite sheet. Prefer one coherent sheet or a shared reference workflow; hold subject design, art style, palette, lighting, scale, frame size, anchor, and view/camera angle constant, and document frame order and timing.
+- For 2D/2.5D generation=\`generate\`, call \`loopseed_image_generate\` and use Codex ImageGen only when that tool returns its fallback, producing at least two distinct keyframes or one sprite sheet. Prefer one coherent sheet or a shared reference workflow; hold subject design, art style, palette, lighting, scale, frame size, anchor, and view/camera angle constant, and document frame order and timing.
 - For generation=\`reuse\`, inspect the real files before claiming reuse. Verify at least two genuinely different frames or multiple pose regions in a sheet, or a required animation clip in a self-contained rigged GLB; cite exact paths and keep or complete the production playback. If evidence fails, switch to \`generate\` and explain the invalidation.
 - For actual 3D animation, play a real GLB animation clip on the rigged mesh. ImageGen can provide a design reference or an explicitly chosen billboard alternative, but an image is never evidence that a 3D clip exists. If the required clip cannot be supplied, report a blocker.
 - For generation=\`not-needed\`, do not fabricate frame assets. Persist the rationale in \`GAME_DESIGN.md\` and implement visible programmatic motion or state feedback instead.
@@ -306,10 +306,10 @@ Set explicit budgets for texture dimensions, concurrent sounds, model count, tri
 - Do not equate target FPS with unique bitmap count. Author only the keyframe density the motion/style needs and preserve duration through deterministic frame holds, interpolation, skeletal animation, morph targets, or engine sampling. Never duplicate frames merely to claim ${project.targetFrameRate} FPS.
 - When the project target changes, treat old target-specific sheets, clips, exports, caches, and timing constants as stale. Replace, resample, retag, or reselect them; remove incompatible production references and document the choice in \`GAME_DESIGN.md\`.
 - Never reference generated output outside the workspace and never paste raw image base64 into project files.
-- Call \`noobi_audio_generate\` with an explicit \`purpose\` on every request. Route MiniMax \`music\` to its Music model and \`speech\`/\`vocal-sfx\` to its Speech model; pass \`instrumental\` and \`lyrics\` only when they truthfully describe the requested music. Nonverbal vocal effects use supported Speech 2.8 tags such as \`(groans)\`, \`(gasps)\`, \`(breath)\`, or \`(hissing)\`, not a sentence describing the sound. MiniMax output is MP3/WAV; loop and trim behavior belongs in production playback code.
-- Never describe MiniMax as a generic gunshot, explosion, impact, footstep, ambience, or Foley generator. A \`purpose\` of \`sfx\` or \`ambience\` intentionally returns \`procedural-audio\`; then use \`noobi_audio_synthesize\`, deterministic Web Audio, or an imported WAV/MP3/OGG with a mute path.
-- Prefer \`noobi_model3d_generate\` when configured and self-contained GLB 2.0 models otherwise. When no service/asset exists, create deliberate procedural Three.js geometry. An image-to-3D workflow must start from a real reference image and pass silhouette, multi-angle, material, and animation checks before use.
-- Register real outputs through \`noobi_asset_register\` when available. Keep the manifest attributable and never invent hashes, sizes, providers, or test results.
+- Call \`loopseed_audio_generate\` with an explicit \`purpose\` on every request. Route MiniMax \`music\` to its Music model and \`speech\`/\`vocal-sfx\` to its Speech model; pass \`instrumental\` and \`lyrics\` only when they truthfully describe the requested music. Nonverbal vocal effects use supported Speech 2.8 tags such as \`(groans)\`, \`(gasps)\`, \`(breath)\`, or \`(hissing)\`, not a sentence describing the sound. MiniMax output is MP3/WAV; loop and trim behavior belongs in production playback code.
+- Never describe MiniMax as a generic gunshot, explosion, impact, footstep, ambience, or Foley generator. A \`purpose\` of \`sfx\` or \`ambience\` intentionally returns \`procedural-audio\`; then use \`loopseed_audio_synthesize\`, deterministic Web Audio, or an imported WAV/MP3/OGG with a mute path.
+- Prefer \`loopseed_model3d_generate\` when configured and self-contained GLB 2.0 models otherwise. When no service/asset exists, create deliberate procedural Three.js geometry. An image-to-3D workflow must start from a real reference image and pass silhouette, multi-angle, material, and animation checks before use.
+- Register real outputs through \`loopseed_asset_register\` when available. Keep the manifest attributable and never invent hashes, sizes, providers, or test results.
 
 ## 4. Implement safely
 
@@ -419,7 +419,7 @@ ${project.idea}
 
 ## Run locally
 
-The starter has no runtime dependency and can be served directly by Noobi.ai. For development tooling:
+The starter has no runtime dependency and can be served directly by LoopSeed. For development tooling:
 
 \`\`\`bash
 npm install
@@ -432,11 +432,11 @@ Create a production preview with:
 npm run build
 \`\`\`
 
-The production output is written to \`dist/\` and is preferred by the Noobi.ai preview server.
+The production output is written to \`dist/\` and is preferred by the LoopSeed preview server.
 
 ## Production requirements
 
-Every Noobi.ai run includes an animation needs assessment with \`generate\`, \`reuse\`, or \`not-needed\`. Generate new 2D/2.5D keyframes through the configured image API with Codex ImageGen fallback only when existing animation assets are absent or incompatible; otherwise verify and reuse the existing frame set/sprite sheet. Actual rigged 3D characters use real GLB animation clips, with generated images limited to reference or billboard work. A justified not-needed assessment must still ship visible programmatic motion or gameplay feedback. The separate requirement to register and visibly use a qualifying host-generated image remains in force.
+Every LoopSeed run includes an animation needs assessment with \`generate\`, \`reuse\`, or \`not-needed\`. Generate new 2D/2.5D keyframes through the configured image API with Codex ImageGen fallback only when existing animation assets are absent or incompatible; otherwise verify and reuse the existing frame set/sprite sheet. Actual rigged 3D characters use real GLB animation clips, with generated images limited to reference or billboard work. A justified not-needed assessment must still ship visible programmatic motion or gameplay feedback. The separate requirement to register and visibly use a qualifying host-generated image remains in force.
 
 This project targets **${project.targetFrameRate} FPS**. Simulation and animation playback use deterministic elapsed-time/fixed-step timing, while actual presentation remains limited by the display. Animation assets carry target/source FPS and duration metadata and production code selects the matching variant. The target does not require ${project.targetFrameRate} unique bitmap images per second; intentional lower-rate keyframes may use timed holds or interpolation. Changing the target requires an audit and replacement/reselection of stale timing and animation variants.
 `;
@@ -687,22 +687,22 @@ function managedRuntimePolicy(targetFrameRate: ProjectRecord['targetFrameRate'])
   if (!isTargetFrameRate(targetFrameRate)) {
     throw new Error('Workspace host policy targetFrameRate must be 30, 60, or 120');
   }
-  return `${NOOBI_HOST_RUNTIME_POLICY_START}
-## Noobi host runtime and media policy (managed, v${NOOBI_HOST_RUNTIME_POLICY_VERSION})
+  return `${LOOPSEED_HOST_RUNTIME_POLICY_START}
+## LoopSeed host runtime and media policy (managed, v${LOOPSEED_HOST_RUNTIME_POLICY_VERSION})
 
-- Managed host policy version: \`${NOOBI_HOST_RUNTIME_POLICY_VERSION}\`.
+- Managed host policy version: \`${LOOPSEED_HOST_RUNTIME_POLICY_VERSION}\`.
 - Current host-selected target: **${targetFrameRate} FPS**.
-- The host-owned \`.noobi/project.json\` field \`targetFrameRate=${targetFrameRate}\` is authoritative for this run.
+- The host-owned \`.loopseed/project.json\` field \`targetFrameRate=${targetFrameRate}\` is authoritative for this run.
 - This managed block overrides any lower, potentially stale text about a different concrete FPS, host media routing or availability, required music, or permitted audio fallbacks. Keep the lower project instructions, but apply their timing and asset-variant rules using ${targetFrameRate} FPS and apply this block's media acceptance gate.
-- Agents must not edit \`.noobi/project.json\` or this managed block; Noobi.ai refreshes both before each Harness run.
+- Agents must not edit \`.loopseed/project.json\` or this managed block; LoopSeed refreshes both before each Harness run.
 
 ### Required music contract
 
 - The current run's host media-routing notice is authoritative. When it reports an enabled MiniMax Music service, a complete game must ship with at least one MiniMax-generated music track by default. Do not infer that the routed service is unavailable merely because a planning role cannot call its tool; the implementing role must attempt the required generation.
-- Satisfy that requirement by actually calling \`noobi_audio_generate\` with \`purpose=music\`. The accepted audio file must exist under \`public/assets/audio/\`, be registered in \`public/assets/asset-pack.json\` through the asset tools when available or with verified metadata otherwise, and be loaded and played by production game code during normal gameplay (after a user gesture when the browser requires one). A tool call without accepted output, provider text, a manifest-only entry, or an unused file does not count.
+- Satisfy that requirement by actually calling \`loopseed_audio_generate\` with \`purpose=music\`. The accepted audio file must exist under \`public/assets/audio/\`, be registered in \`public/assets/asset-pack.json\` through the asset tools when available or with verified metadata otherwise, and be loaded and played by production game code during normal gameplay (after a user gesture when the browser requires one). A tool call without accepted output, provider text, a manifest-only entry, or an unused file does not count.
 - If required music generation, ingestion, loading, or playback fails, repair/retry it or report the game as blocked. Never silently substitute Web Audio, \`AudioContext\` oscillators, or other procedural audio and present that substitute as the required MiniMax music or as successful completion.
-- Programmatic audio remains valid for generic non-vocal SFX such as impacts, footsteps, gunshots, and UI cues, including \`noobi_audio_synthesize\` or deterministic Web Audio. Those effects may accompany the generated track but never satisfy or replace the required-music contract.
-${NOOBI_HOST_RUNTIME_POLICY_END}`;
+- Programmatic audio remains valid for generic non-vocal SFX such as impacts, footsteps, gunshots, and UI cues, including \`loopseed_audio_synthesize\` or deterministic Web Audio. Those effects may accompany the generated track but never satisfy or replace the required-music contract.
+${LOOPSEED_HOST_RUNTIME_POLICY_END}`;
 }
 
 function placeManagedRuntimePolicy(
@@ -727,22 +727,22 @@ function stripManagedRuntimePolicies(content: string): string {
   let cursor = 0;
   let result = '';
   while (true) {
-    const start = content.indexOf(NOOBI_HOST_RUNTIME_POLICY_START, cursor);
+    const start = content.indexOf(LOOPSEED_HOST_RUNTIME_POLICY_START, cursor);
     if (start < 0) break;
-    const end = content.indexOf(NOOBI_HOST_RUNTIME_POLICY_END, start + NOOBI_HOST_RUNTIME_POLICY_START.length);
-    const nestedStart = content.indexOf(NOOBI_HOST_RUNTIME_POLICY_START, start + NOOBI_HOST_RUNTIME_POLICY_START.length);
+    const end = content.indexOf(LOOPSEED_HOST_RUNTIME_POLICY_END, start + LOOPSEED_HOST_RUNTIME_POLICY_START.length);
+    const nestedStart = content.indexOf(LOOPSEED_HOST_RUNTIME_POLICY_START, start + LOOPSEED_HOST_RUNTIME_POLICY_START.length);
     if (end < 0 || (nestedStart >= 0 && nestedStart < end)) {
-      throw new Error('Workspace contains a malformed Noobi host runtime policy block');
+      throw new Error('Workspace contains a malformed LoopSeed host runtime policy block');
     }
     result += content.slice(cursor, start);
-    cursor = end + NOOBI_HOST_RUNTIME_POLICY_END.length;
+    cursor = end + LOOPSEED_HOST_RUNTIME_POLICY_END.length;
   }
   result += content.slice(cursor);
   if (
-    result.includes(NOOBI_HOST_RUNTIME_POLICY_START)
-    || result.includes(NOOBI_HOST_RUNTIME_POLICY_END)
+    result.includes(LOOPSEED_HOST_RUNTIME_POLICY_START)
+    || result.includes(LOOPSEED_HOST_RUNTIME_POLICY_END)
   ) {
-    throw new Error('Workspace contains a malformed Noobi host runtime policy block');
+    throw new Error('Workspace contains a malformed LoopSeed host runtime policy block');
   }
   return result;
 }
@@ -919,7 +919,7 @@ function packageSlug(name: string): string {
     .replace(/[^a-z0-9]+/gu, '-')
     .replace(/^-+|-+$/gu, '')
     .slice(0, 64);
-  return slug || 'noobi-game';
+  return slug || 'loopseed-game';
 }
 
 function asMarkdownQuote(value: string): string {

@@ -54,8 +54,8 @@ const AUDIO_PURPOSES = ['music', 'speech', 'vocal-sfx', 'sfx', 'ambience'] as co
 export const MEDIA_DYNAMIC_TOOLS: DynamicToolSpec[] = [
   {
     type: 'function',
-    name: 'noobi_asset_list',
-    description: 'List validated game assets in this Noobi.ai project. Returns workspace-relative paths only.',
+    name: 'loopseed_asset_list',
+    description: 'List validated game assets in this LoopSeed project. Returns workspace-relative paths only.',
     inputSchema: {
       type: 'object',
       properties: {
@@ -67,7 +67,7 @@ export const MEDIA_DYNAMIC_TOOLS: DynamicToolSpec[] = [
   },
   {
     type: 'function',
-    name: 'noobi_asset_register',
+    name: 'loopseed_asset_register',
     description: 'Validate and register an existing asset under public/assets in the current project.',
     inputSchema: {
       type: 'object',
@@ -82,7 +82,7 @@ export const MEDIA_DYNAMIC_TOOLS: DynamicToolSpec[] = [
   },
   {
     type: 'function',
-    name: 'noobi_audio_synthesize',
+    name: 'loopseed_audio_synthesize',
     description: 'Create a short deterministic procedural game sound as mono PCM16 WAV and register it as an asset.',
     inputSchema: {
       type: 'object',
@@ -98,7 +98,7 @@ export const MEDIA_DYNAMIC_TOOLS: DynamicToolSpec[] = [
   },
   {
     type: 'function',
-    name: 'noobi_image_generate',
+    name: 'loopseed_image_generate',
     description: 'Generate and register an image using the configured image API. If none is configured, returns an explicit Codex ImageGen fallback instruction.',
     inputSchema: {
       type: 'object',
@@ -117,8 +117,8 @@ export const MEDIA_DYNAMIC_TOOLS: DynamicToolSpec[] = [
   },
   {
     type: 'function',
-    name: 'noobi_audio_generate',
-    description: 'Generate and register audio through the configured provider. Always set purpose. MiniMax Music handles music; MiniMax Speech handles speech and vocal-sfx. For nonverbal vocal-sfx, write actual Speech 2.8 interjection tags such as (groans), (gasps), or (hissing), not descriptive prose. MiniMax accepts mp3/wav and does not honor durationSeconds. Generic sfx and ambience are not claimed as MiniMax capabilities and return a procedural-audio fallback for noobi_audio_synthesize or deterministic Web Audio.',
+    name: 'loopseed_audio_generate',
+    description: 'Generate and register audio through the configured provider. Always set purpose. MiniMax Music handles music; MiniMax Speech handles speech and vocal-sfx. For nonverbal vocal-sfx, write actual Speech 2.8 interjection tags such as (groans), (gasps), or (hissing), not descriptive prose. MiniMax accepts mp3/wav and does not honor durationSeconds. Generic sfx and ambience are not claimed as MiniMax capabilities and return a procedural-audio fallback for loopseed_audio_synthesize or deterministic Web Audio.',
     inputSchema: {
       type: 'object',
       properties: {
@@ -143,7 +143,7 @@ export const MEDIA_DYNAMIC_TOOLS: DynamicToolSpec[] = [
   },
   {
     type: 'function',
-    name: 'noobi_model3d_generate',
+    name: 'loopseed_model3d_generate',
     description: 'Generate and register a self-contained GLB through the configured 3D model API.',
     inputSchema: {
       type: 'object',
@@ -179,30 +179,30 @@ export class MediaToolBroker {
     try {
       const params = readCallParams(request.params);
       project = await this.#options.resolveProject(params.threadId);
-      if (!project) throw new ToolInputError('This tool call is not attached to an active Noobi.ai project');
+      if (!project) throw new ToolInputError('This tool call is not attached to an active LoopSeed project');
 
       let payload: unknown;
       switch (params.tool) {
-        case 'noobi_asset_list':
+        case 'loopseed_asset_list':
           payload = await this.#list(project, params.arguments);
           break;
-        case 'noobi_asset_register':
+        case 'loopseed_asset_register':
           payload = await this.#register(project, params.arguments);
           break;
-        case 'noobi_audio_synthesize':
+        case 'loopseed_audio_synthesize':
           payload = await this.#synthesize(project, params.arguments);
           break;
-        case 'noobi_image_generate':
+        case 'loopseed_image_generate':
           payload = await this.#generate(project, 'image', params.arguments);
           break;
-        case 'noobi_audio_generate':
+        case 'loopseed_audio_generate':
           payload = await this.#generate(project, 'audio', params.arguments);
           break;
-        case 'noobi_model3d_generate':
+        case 'loopseed_model3d_generate':
           payload = await this.#generate(project, 'model3d', params.arguments);
           break;
         default:
-          throw new ToolInputError('Unknown Noobi.ai media tool');
+          throw new ToolInputError('Unknown LoopSeed media tool');
       }
       this.#respond(request.id, payload, true);
     } catch (error) {
@@ -288,7 +288,7 @@ export class MediaToolBroker {
       relativePath: generated.relativePath,
       name,
       source: 'procedural',
-      provider: 'noobi-procedural-audio',
+      provider: 'loopseed-procedural-audio',
       metadata: {
         preset: generated.preset,
         durationSeconds: generated.durationSeconds,
@@ -550,9 +550,9 @@ function publicGenerationResult(result: MediaGenerationResult): Record<string, u
       reason: result.reason,
       prompt: result.prompt,
       ...(result.fallback === 'codex-imagegen'
-        ? { instruction: 'Invoke the Codex $imagegen skill now, then register the generated image with Noobi.ai.' }
+        ? { instruction: 'Invoke the Codex $imagegen skill now, then register the generated image with LoopSeed.' }
         : result.fallback === 'procedural-audio'
-          ? { instruction: 'Use noobi_audio_synthesize for a short deterministic effect, deterministic Web Audio for a custom/ambient fallback, or import a licensed WAV/MP3/OGG. Do not claim MiniMax generated generic SFX or ambience.' }
+          ? { instruction: 'Use loopseed_audio_synthesize for a short deterministic effect, deterministic Web Audio for a custom/ambient fallback, or import a licensed WAV/MP3/OGG. Do not claim MiniMax generated generic SFX or ambience.' }
           : { instruction: 'Configure a 3D generation provider or create and register a validated GLB in the workspace.' }),
     },
   };

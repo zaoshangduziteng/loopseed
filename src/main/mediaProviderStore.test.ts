@@ -18,14 +18,14 @@ function fakeSecretCodec(available = true): MediaProviderSecretCodec {
     isAvailable: () => available,
     seal: (plaintext) => {
       const payload = Buffer.from(plaintext, 'utf8').toString('base64url');
-      const digest = createHash('sha256').update(`noobi-test-key\0${plaintext}`).digest('hex');
+      const digest = createHash('sha256').update(`loopseed-test-key\0${plaintext}`).digest('hex');
       return `fake-keychain:v1:${payload}.${digest}`;
     },
     open: (sealed) => {
       const match = /^fake-keychain:v1:([A-Za-z0-9_-]+)\.([a-f0-9]{64})$/u.exec(sealed);
       if (!match) throw new Error('bad envelope');
       const plaintext = Buffer.from(match[1]!, 'base64url').toString('utf8');
-      const digest = createHash('sha256').update(`noobi-test-key\0${plaintext}`).digest('hex');
+      const digest = createHash('sha256').update(`loopseed-test-key\0${plaintext}`).digest('hex');
       if (digest !== match[2]) throw new Error('authentication failed');
       return plaintext;
     },
@@ -77,7 +77,7 @@ describe('media provider store', () => {
   });
 
   it('persists only sealed secrets and decrypts them only inside the provider callback', async () => {
-    const root = await mkdtemp(join(tmpdir(), 'noobi-provider-store-'));
+    const root = await mkdtemp(join(tmpdir(), 'loopseed-provider-store-'));
     roots.push(root);
     const storageFile = join(root, 'private', 'media-providers.json');
     const store = new MediaProviderStore(storageFile, fakeSecretCodec());
@@ -85,7 +85,7 @@ describe('media provider store', () => {
     const saved = await store.upsert({
       presetId: 'openai-image',
       displayName: 'Production Images',
-      apiKey: 'sk-noobi-super-secret',
+      apiKey: 'sk-loopseed-super-secret',
       setActive: true,
     });
 
@@ -95,12 +95,12 @@ describe('media provider store', () => {
       active: true,
       model: 'gpt-image-2',
     });
-    expect(JSON.stringify(saved)).not.toContain('sk-noobi-super-secret');
-    expect(JSON.stringify(store.list())).not.toContain('sk-noobi-super-secret');
-    expect(JSON.stringify(store.get(saved.id))).not.toContain('sk-noobi-super-secret');
+    expect(JSON.stringify(saved)).not.toContain('sk-loopseed-super-secret');
+    expect(JSON.stringify(store.list())).not.toContain('sk-loopseed-super-secret');
+    expect(JSON.stringify(store.get(saved.id))).not.toContain('sk-loopseed-super-secret');
 
     const contents = await readFile(storageFile, 'utf8');
-    expect(contents).not.toContain('sk-noobi-super-secret');
+    expect(contents).not.toContain('sk-loopseed-super-secret');
     expect(JSON.parse(contents)).toMatchObject({
       version: 2,
       providers: [{ sealedApiKey: expect.stringMatching(/^fake-keychain:v1:/u) }],
@@ -116,15 +116,15 @@ describe('media provider store', () => {
       secretSeen = provider.apiKey ?? '';
       return undefined;
     });
-    expect(secretSeen).toBe('sk-noobi-super-secret');
+    expect(secretSeen).toBe('sk-loopseed-super-secret');
 
     const reopened = new MediaProviderStore(storageFile, fakeSecretCodec());
     await reopened.init();
-    expect(await reopened.withActiveProvider('image', async (provider) => provider.apiKey)).toBe('sk-noobi-super-secret');
+    expect(await reopened.withActiveProvider('image', async (provider) => provider.apiKey)).toBe('sk-loopseed-super-secret');
   });
 
   it('preserves omitted keys, supports explicit clearing, and ignores disabled providers', async () => {
-    const root = await mkdtemp(join(tmpdir(), 'noobi-provider-update-'));
+    const root = await mkdtemp(join(tmpdir(), 'loopseed-provider-update-'));
     roots.push(root);
     const store = new MediaProviderStore(join(root, 'media.json'), fakeSecretCodec());
     await store.init();
@@ -137,7 +137,7 @@ describe('media provider store', () => {
   });
 
   it('migrates a v1 plaintext key once and atomically writes schema v2 ciphertext', async () => {
-    const root = await mkdtemp(join(tmpdir(), 'noobi-provider-migration-'));
+    const root = await mkdtemp(join(tmpdir(), 'loopseed-provider-migration-'));
     roots.push(root);
     const storageFile = join(root, 'media.json');
     await writeFile(storageFile, JSON.stringify({
@@ -175,7 +175,7 @@ describe('media provider store', () => {
   });
 
   it('re-seals legacy unbound schema v2 ciphertext without changing the document version', async () => {
-    const root = await mkdtemp(join(tmpdir(), 'noobi-provider-v2-binding-migration-'));
+    const root = await mkdtemp(join(tmpdir(), 'loopseed-provider-v2-binding-migration-'));
     roots.push(root);
     const storageFile = join(root, 'media.json');
     const codec = fakeSecretCodec();
@@ -209,7 +209,7 @@ describe('media provider store', () => {
   });
 
   it('migrates the existing empty v1 document even when the OS credential store is unavailable', async () => {
-    const root = await mkdtemp(join(tmpdir(), 'noobi-provider-empty-migration-'));
+    const root = await mkdtemp(join(tmpdir(), 'loopseed-provider-empty-migration-'));
     roots.push(root);
     const storageFile = join(root, 'media.json');
     await writeFile(storageFile, JSON.stringify({ version: 1, active: {}, providers: [] }));
@@ -225,7 +225,7 @@ describe('media provider store', () => {
   });
 
   it('fails closed when OS encryption is unavailable and never writes a plaintext fallback', async () => {
-    const root = await mkdtemp(join(tmpdir(), 'noobi-provider-unavailable-keychain-'));
+    const root = await mkdtemp(join(tmpdir(), 'loopseed-provider-unavailable-keychain-'));
     roots.push(root);
     const storageFile = join(root, 'media.json');
     const store = new MediaProviderStore(storageFile, fakeSecretCodec(false));
@@ -241,7 +241,7 @@ describe('media provider store', () => {
   });
 
   it('rejects damaged ciphertext instead of treating the provider as configured', async () => {
-    const root = await mkdtemp(join(tmpdir(), 'noobi-provider-damaged-ciphertext-'));
+    const root = await mkdtemp(join(tmpdir(), 'loopseed-provider-damaged-ciphertext-'));
     roots.push(root);
     const storageFile = join(root, 'media.json');
     const store = new MediaProviderStore(storageFile, fakeSecretCodec());
@@ -256,7 +256,7 @@ describe('media provider store', () => {
   });
 
   it('never carries an omitted API key across provider presets', async () => {
-    const root = await mkdtemp(join(tmpdir(), 'noobi-provider-vendor-switch-'));
+    const root = await mkdtemp(join(tmpdir(), 'loopseed-provider-vendor-switch-'));
     roots.push(root);
     const storageFile = join(root, 'media.json');
     const store = new MediaProviderStore(storageFile, fakeSecretCodec());
@@ -273,7 +273,7 @@ describe('media provider store', () => {
   });
 
   it('locks the MiniMax preset to the official API origin', async () => {
-    const root = await mkdtemp(join(tmpdir(), 'noobi-provider-minimax-origin-'));
+    const root = await mkdtemp(join(tmpdir(), 'loopseed-provider-minimax-origin-'));
     roots.push(root);
     const store = new MediaProviderStore(join(root, 'media.json'), fakeSecretCodec());
     await store.init();
@@ -288,7 +288,7 @@ describe('media provider store', () => {
   });
 
   it('preserves valid MiniMax bearer tokens and rejects pasted labels, Unicode, whitespace, and Markdown escapes', async () => {
-    const root = await mkdtemp(join(tmpdir(), 'noobi-provider-minimax-key-'));
+    const root = await mkdtemp(join(tmpdir(), 'loopseed-provider-minimax-key-'));
     roots.push(root);
     const store = new MediaProviderStore(join(root, 'media.json'), fakeSecretCodec());
     await store.init();
@@ -314,7 +314,7 @@ describe('media provider store', () => {
   });
 
   it('binds an omitted API key to its provider preset, endpoint origin, and authentication mode', async () => {
-    const root = await mkdtemp(join(tmpdir(), 'noobi-provider-secret-boundary-'));
+    const root = await mkdtemp(join(tmpdir(), 'loopseed-provider-secret-boundary-'));
     roots.push(root);
     const store = new MediaProviderStore(join(root, 'media.json'), fakeSecretCodec());
     await store.init();
@@ -359,7 +359,7 @@ describe('media provider store', () => {
   });
 
   it('rejects persisted endpoint-origin and authentication tampering before exposing a key', async () => {
-    const root = await mkdtemp(join(tmpdir(), 'noobi-provider-persisted-binding-'));
+    const root = await mkdtemp(join(tmpdir(), 'loopseed-provider-persisted-binding-'));
     roots.push(root);
     const storageFile = join(root, 'media.json');
     const codec = fakeSecretCodec();
@@ -387,7 +387,7 @@ describe('media provider store', () => {
   });
 
   it('rejects ciphertext swapped across provider records', async () => {
-    const root = await mkdtemp(join(tmpdir(), 'noobi-provider-ciphertext-swap-'));
+    const root = await mkdtemp(join(tmpdir(), 'loopseed-provider-ciphertext-swap-'));
     roots.push(root);
     const storageFile = join(root, 'media.json');
     const codec = fakeSecretCodec();
@@ -423,7 +423,7 @@ describe('media provider store', () => {
   });
 
   it('rejects custom presets without an explicit REST endpoint', async () => {
-    const root = await mkdtemp(join(tmpdir(), 'noobi-provider-custom-'));
+    const root = await mkdtemp(join(tmpdir(), 'loopseed-provider-custom-'));
     roots.push(root);
     const store = new MediaProviderStore(join(root, 'media.json'), fakeSecretCodec());
     await store.init();

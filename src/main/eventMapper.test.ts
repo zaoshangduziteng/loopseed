@@ -70,7 +70,7 @@ describe('eventMapper', () => {
           item: {
             id: 'tool-1',
             type: 'dynamicToolCall',
-            tool: 'noobi_audio_synthesize',
+            tool: 'loopseed_audio_synthesize',
             arguments: { secret: 'do-not-log' },
             contentItems: [{ type: 'inputAudio', audioUrl: `data:audio/wav;base64,${'A'.repeat(50_000)}` }],
             status: 'completed',

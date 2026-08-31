@@ -1,10 +1,10 @@
-# Noobi.ai 功能拆解
+# LoopSeed 功能拆解
 
 ## 产品目标
 
-Noobi.ai 是一个面向独立开发者和创意团队的游戏制作 Agent。用户用自然语言描述游戏，Codex 在受控项目目录内完成策划、脚手架、素材接入、动画需求判断、代码实现、构建验证和持续迭代；产品负责把 Codex App Server 的线程、回合、工具、审批与文件变化转化成可理解的制作工作台。
+LoopSeed 是一个面向独立开发者和创意团队的游戏制作 Agent。用户用自然语言描述游戏，Codex 在受控项目目录内完成策划、脚手架、素材接入、动画需求判断、代码实现、构建验证和持续迭代；产品负责把 Codex App Server 的线程、回合、工具、审批与文件变化转化成可理解的制作工作台。
 
-新工程只继承旧 Noobi.ai 的产品能力和前端信息架构，不继承旧项目的迁移状态、私有运行时封装或历史数据门禁。
+LoopSeed 采用简化的产品能力和前端信息架构，不引入旧项目的迁移状态、私有运行时封装或历史数据门禁。
 
 ## 从现有产品拆出的功能域
 
@@ -12,7 +12,7 @@ Noobi.ai 是一个面向独立开发者和创意团队的游戏制作 Agent。�
 
 - 创建游戏项目：名称、创意描述、存放目录、模型、30/60/120 FPS 制作目标（默认 60）；AI 图片素材生产是固定要求，不提供跳过策略。
 - 项目轨：切换项目、查看状态、继续最近会话。
-- 初始化标准游戏工作区：`AGENTS.md`、Noobi Skill、项目元数据和可运行网页游戏入口。
+- 初始化标准游戏工作区：`AGENTS.md`、LoopSeed Skill、项目元数据和可运行网页游戏入口。
 - 在 Finder 中显示项目、刷新文件、读取文本文件。
 - 项目数据与 Codex thread id 独立持久化。
 
@@ -58,7 +58,7 @@ Noobi.ai 是一个面向独立开发者和创意团队的游戏制作 Agent。�
 - ChatGPT 登录/退出与账户状态。
 - 默认工作区、默认模型、推理强度、主题；不提供关闭生成图片门禁的设置。
 - 媒体 API：图像服务优先、Codex ImageGen 回退；音频请求按 `music | speech | vocal-sfx | sfx | ambience` 明确分类，MiniMax Music 负责音乐、MiniMax Speech 负责人声/人声音效，通用 SFX 与 ambience 返回程序化回退；3D 使用主要模型/同步 REST 网关；密钥由 macOS Keychain 支撑的 Electron safeStorage 加密，磁盘只保存密文。
-- Codex Skills：读取原生 Skills 目录并即时启停，不删除 Skill 文件；固定素材门禁依赖的宿主 ImageGen 标记为 `NOOBI REQUIRED`，不可停用。
+- Codex Skills：读取原生 Skills 目录并即时启停，不删除 Skill 文件；固定素材门禁依赖的宿主 ImageGen 标记为必需能力，不可停用。
 - MCP Servers：管理 stdio 命令与 HTTP Endpoint，保存后通过 App Server 重载；HTTP Token 只引用主进程环境变量名。
 - 提示词管理：Planner、Implementer、Reviewer、Repair 分层启停、编辑和恢复；未保存草稿受离开保护，内容作为不可信偏好放在固定安全/素材/FPS 契约之前，不能覆盖宿主门禁。
 - 旧历史导入只能是显式、可取消的工具，永远不阻断新项目或新线程。
@@ -85,7 +85,7 @@ Noobi.ai 是一个面向独立开发者和创意团队的游戏制作 Agent。�
 - 固定执行“配置图像 API 优先、Codex ImageGen 回退”的图片生成并校验实际使用；2D/2.5D 动画为 `generate` 时才额外生产风格、尺度、锚点、单帧尺寸与视角一致的关键帧/sprite sheet，`reuse` 时验证并复用已有多姿态帧与实际播放，实际 3D 则复用/接入真实 rigged-GLB animation clip，`not-needed` 时验证具体理由和程序运动反馈；同时提供媒体 API、程序化音效、图片拖入、音频/GLB 导入与统一 manifest。
 - 30/60/120 FPS 目标驱动确定性引擎 cadence、动画素材 target/source FPS 标记和 runtime variant selection；Harness 启动前先同步宿主元数据/指令策略，随后要求 Agent 替换、重采样、重标记或重选不兼容素材并由 Reviewer 验收。不会机械生成每秒 120 张位图，而是按运动/风格选择关键帧密度并用持帧、插值、骨骼/morph 或引擎采样保持时长与质量。
 - 安全 Dynamic Tool dispatcher、工具契约版本化和素材 UI。
-- Dynamic Tools 已提供图片、音频、3D 生成入口；`noobi_audio_generate` 透传 `purpose`、`instrumental`、`lyrics` 等有界参数，音乐与人声音效分别路由到 MiniMax Music/Speech。枪声、爆炸、撞击、脚步或环境底噪不虚构成 MiniMax 能力，统一走 `procedural-audio`、Web Audio 或导入素材。Codex 没有原生音频/3D 生成时使用用户配置 API 或明确的程序化/无服务回退，不虚构能力。
+- Dynamic Tools 已提供图片、音频、3D 生成入口；`loopseed_audio_generate` 透传 `purpose`、`instrumental`、`lyrics` 等有界参数，音乐与人声音效分别路由到 MiniMax Music/Speech。枪声、爆炸、撞击、脚步或环境底噪不虚构成 MiniMax 能力，统一走 `procedural-audio`、Web Audio 或导入素材。Codex 没有原生音频/3D 生成时使用用户配置 API 或明确的程序化/无服务回退，不虚构能力。
 - Settings 已接入 Codex 原生 Skills 与 MCP 配置/状态，并提供应用私有的分角色提示词管理。
 - 构建产物导出与平台打包。
 - 可选历史导入，不设置 hard cut。

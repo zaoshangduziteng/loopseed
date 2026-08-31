@@ -1,10 +1,8 @@
 import {
-  ArrowRight,
   FolderOpen,
   Menu,
   Moon,
   Settings,
-  Sparkles,
   Sun,
   X,
 } from 'lucide-react';
@@ -30,29 +28,40 @@ import type {
 import { ApprovalModal } from './components/ApprovalModal';
 import { BrandMark } from './components/BrandMark';
 import { Composer } from './components/Composer';
+import { DashboardHome } from './components/DashboardHome';
 import { EventStream } from './components/EventStream';
 import { Inspector } from './components/Inspector';
 import { NewProjectModal } from './components/NewProjectModal';
+import { PersonalPage } from './components/PersonalPage';
 import { Pipeline } from './components/Pipeline';
+import { ProjectLibrary } from './components/ProjectLibrary';
 import { ProjectRail } from './components/ProjectRail';
 import { SettingsModal } from './components/SettingsModal';
+import { getBuildBlockReason, WorkbenchNotice } from './components/WorkbenchNotice';
 import { PROJECT_STATUS_LABELS, runtimeLabel, toMessage } from './ui';
 
 type EventMap = Record<string, AgentEvent[]>;
+type AppView = 'home' | 'projects' | 'personal' | 'project';
 
 export function App() {
   const [bootstrap, setBootstrap] = useState<BootstrapPayload | null>(null);
   const [projects, setProjects] = useState<ProjectRecord[]>([]);
   const [settings, setSettings] = useState<AppSettings | null>(null);
   const [runtime, setRuntime] = useState<RuntimeStatus | null>(null);
+  const [activeView, setActiveView] = useState<AppView>('home');
   const [selectedId, setSelectedId] = useState<string>();
   const [events, setEvents] = useState<EventMap>({});
   const [approvals, setApprovals] = useState<ApprovalRequest[]>([]);
   const [showCreate, setShowCreate] = useState(false);
+  const [newProjectIdea, setNewProjectIdea] = useState('');
   const [showSettings, setShowSettings] = useState(false);
   const [railOpen, setRailOpen] = useState(false);
+  const [railCollapsed, setRailCollapsed] = useState(
+    () => window.localStorage.getItem('loopseed:rail-collapsed') === 'true',
+  );
   const [error, setError] = useState('');
   const [refreshSignal, setRefreshSignal] = useState(0);
+  const [refreshingRuntime, setRefreshingRuntime] = useState(false);
   const [loadingError, setLoadingError] = useState('');
 
   const selected = useMemo(
@@ -62,11 +71,32 @@ export function App() {
   const imageGenerationAvailable = Boolean(
     runtime?.capabilities.imageGeneration || runtime?.capabilities.externalImageGeneration,
   );
+  const autoStartAvailable = Boolean(
+    runtime?.state === 'ready'
+      && runtime.account
+      && runtime.models.length > 0
+      && imageGenerationAvailable,
+  );
+  const autoStartMessage = !runtime || runtime.state !== 'ready'
+    ? runtime?.error ?? '本地 Codex 运行时尚未就绪，可以先创建工作区。'
+    : !runtime.account
+      ? '本地 Codex 尚未连接账户，可以先创建工作区。'
+      : runtime.models.length === 0
+        ? '本地 Codex 尚未返回可用模型，可以先创建工作区。'
+        : !imageGenerationAvailable
+          ? '图片生成能力尚未就绪，可以先创建工作区。'
+          : `${runtime.account.email ?? 'Codex 已连接'} · 图片素材能力已就绪`;
+  const buildBlockReason = runtime
+    ? getBuildBlockReason(runtime, imageGenerationAvailable)
+    : '本地 Codex 状态尚未载入。';
+  const approvalPending = Boolean(
+    selected && approvals.some((approval) => approval.projectId === selected.id),
+  );
 
   const loadBootstrap = useCallback(async () => {
     setLoadingError('');
     try {
-      const state = await window.noobi.bootstrap();
+      const state = await window.loopseed.bootstrap();
       setBootstrap(state);
       setProjects(state.projects);
       setSettings(state.settings);
@@ -75,7 +105,7 @@ export function App() {
       setSelectedId((current) =>
         current && state.projects.some((project) => project.id === current)
           ? current
-          : state.projects[0]?.id,
+          : undefined,
       );
     } catch (reason) {
       setLoadingError(toMessage(reason));
@@ -85,7 +115,7 @@ export function App() {
   useEffect(() => {
     void loadBootstrap();
 
-    const stopAgentEvents = window.noobi.onAgentEvent((event) => {
+    const stopAgentEvents = window.loopseed.onAgentEvent((event) => {
       setEvents((current) => ({
         ...current,
         [event.projectId]: mergeEvent(current[event.projectId] ?? [], event),
@@ -95,22 +125,22 @@ export function App() {
       }
     });
 
-    const stopProjects = window.noobi.onProjectChanged((project) => {
+    const stopProjects = window.loopseed.onProjectChanged((project) => {
       setProjects((current) => upsertProject(current, project));
     });
 
-    const stopRuntime = window.noobi.onRuntimeChanged((status) => {
+    const stopRuntime = window.loopseed.onRuntimeChanged((status) => {
       setRuntime(status);
     });
 
-    const stopApprovals = window.noobi.onApproval((approval) => {
+    const stopApprovals = window.loopseed.onApproval((approval) => {
       setApprovals((current) =>
         current.some((item) => item.token === approval.token)
           ? current
           : [...current, approval],
       );
     });
-    const stopApprovalClosed = window.noobi.onApprovalClosed((token) => {
+    const stopApprovalClosed = window.loopseed.onApprovalClosed((token) => {
       setApprovals((current) => current.filter((item) => item.token !== token));
     });
 
@@ -129,14 +159,48 @@ export function App() {
     document.documentElement.style.colorScheme = settings.theme;
     document
       .querySelector('meta[name="theme-color"]')
-      ?.setAttribute('content', settings.theme === 'dark' ? '#3c315b' : '#fdfcfe');
+      ?.setAttribute('content', settings.theme === 'dark' ? '#181818' : '#f7f7f8');
   }, [settings]);
 
-  async function createProject(input: CreateProjectInput) {
-    const project = await window.noobi.createProject(input);
+  useEffect(() => {
+    window.localStorage.setItem('loopseed:rail-collapsed', String(railCollapsed));
+  }, [railCollapsed]);
+
+  async function createProject(input: CreateProjectInput, startAgent: boolean) {
+    const project = await window.loopseed.createProject(input);
     setProjects((current) => upsertProject(current, project));
     setSelectedId(project.id);
+    setActiveView('project');
+    setRailOpen(false);
+
+    if (startAgent && runtime && settings) {
+      const selectedModel = runtime.models.find((item) => item.model === input.model);
+      try {
+        const running = await window.loopseed.runProject({
+          projectId: project.id,
+          prompt: input.idea,
+          model: input.model ?? null,
+          effort: selectedModel?.defaultEffort ?? settings.defaultEffort,
+          targetFrameRate: input.targetFrameRate ?? settings.defaultTargetFrameRate,
+        });
+        setProjects((current) => upsertProject(current, running));
+      } catch (reason) {
+        setError(`项目已创建，但首次制作没有启动：${toMessage(reason)}`);
+      }
+    }
+
     setShowCreate(false);
+    setNewProjectIdea('');
+  }
+
+  function openCreate(idea = '') {
+    setNewProjectIdea(idea);
+    setShowCreate(true);
+  }
+
+  function openProject(project: ProjectRecord) {
+    setSelectedId(project.id);
+    setActiveView('project');
     setRailOpen(false);
   }
 
@@ -164,7 +228,7 @@ export function App() {
       return;
     }
     try {
-      const project = await window.noobi.runProject({
+      const project = await window.loopseed.runProject({
         projectId: selected.id,
         prompt,
         model,
@@ -180,7 +244,7 @@ export function App() {
   async function stopProject() {
     if (!selected) return;
     try {
-      const project = await window.noobi.stopProject(selected.id);
+      const project = await window.loopseed.stopProject(selected.id);
       setProjects((current) => upsertProject(current, project));
     } catch (reason) {
       setError(toMessage(reason));
@@ -192,9 +256,20 @@ export function App() {
     const theme = settings.theme === 'dark' ? 'light' : 'dark';
     setSettings((current) => (current ? { ...current, theme } : current));
     try {
-      setSettings(await window.noobi.saveSettings({ theme }));
+      setSettings(await window.loopseed.saveSettings({ theme }));
     } catch (reason) {
       setError(toMessage(reason));
+    }
+  }
+
+  async function refreshRuntimeStatus() {
+    setRefreshingRuntime(true);
+    try {
+      setRuntime(await window.loopseed.refreshRuntime());
+    } catch (reason) {
+      setError(`无法重新检测本地 Codex：${toMessage(reason)}`);
+    } finally {
+      setRefreshingRuntime(false);
     }
   }
 
@@ -203,7 +278,7 @@ export function App() {
     decision: ApprovalDecision,
     answers?: ApprovalAnswers,
   ) {
-    await window.noobi.resolveApproval(token, decision, answers);
+    await window.loopseed.resolveApproval(token, decision, answers);
     setApprovals((current) => current.filter((item) => item.token !== token));
   }
 
@@ -230,23 +305,34 @@ export function App() {
   }
 
   return (
-    <div className="app-shell">
+    <div className={`app-shell${activeView === 'project' ? ' is-project-view' : ''}${railCollapsed ? ' is-rail-collapsed' : ''}`}>
       <ProjectRail
+        activeView={activeView}
         projects={projects}
         selectedId={selectedId}
         runtime={runtime}
         open={railOpen}
+        collapsed={railCollapsed}
         onClose={() => setRailOpen(false)}
+        onToggleCollapsed={() => setRailCollapsed((current) => !current)}
         onHome={() => {
-          setSelectedId(undefined);
+          setActiveView('home');
           setRailOpen(false);
         }}
-        onSelect={(project) => {
-          setSelectedId(project.id);
+        onProjects={() => {
+          setActiveView('projects');
           setRailOpen(false);
         }}
-        onCreate={() => setShowCreate(true)}
-        onSettings={() => setShowSettings(true)}
+        onPersonal={() => {
+          setActiveView('personal');
+          setRailOpen(false);
+        }}
+        onSelect={openProject}
+        onCreate={() => openCreate()}
+        onSettings={() => {
+          setShowSettings(true);
+          setRailOpen(false);
+        }}
       />
 
       <main className="workspace">
@@ -270,8 +356,16 @@ export function App() {
           </button>
 
           <div className="topbar-project">
-            <strong>{selected?.name ?? 'LoopSeed Studio'}</strong>
-            {selected ? (
+            <strong>
+              {activeView === 'projects'
+                ? '我的游戏'
+                : activeView === 'personal'
+                  ? '我的 LoopSeed'
+                  : activeView === 'project' && selected
+                    ? selected.name
+                    : 'LoopSeed Studio'}
+            </strong>
+            {activeView === 'project' && selected ? (
               <span className={`status-chip status-${selected.status}`}>
                 {PROJECT_STATUS_LABELS[selected.status]}
               </span>
@@ -284,8 +378,8 @@ export function App() {
               type="button"
               aria-label="在 Finder 中打开项目"
               title="在 Finder 中打开项目"
-              disabled={!selected}
-              onClick={() => selected && void window.noobi.revealProject(selected.id)}
+              disabled={activeView !== 'project' || !selected}
+              onClick={() => activeView === 'project' && selected && void window.loopseed.revealProject(selected.id)}
             >
               <FolderOpen size={15} />
             </button>
@@ -310,21 +404,30 @@ export function App() {
           </div>
         </header>
 
-        {selected ? (
+        {activeView === 'project' && selected ? (
           <div className="production-layout">
             <section className="production-center">
               <Pipeline stage={selected.stage} status={selected.status} />
+              <WorkbenchNotice
+                project={selected}
+                runtime={runtime}
+                buildBlockReason={buildBlockReason}
+                approvalPending={approvalPending}
+                refreshingRuntime={refreshingRuntime}
+                onFocusComposer={() => {
+                  document.getElementById('agent-composer-input')?.focus();
+                }}
+                onOpenSettings={() => setShowSettings(true)}
+                onRefreshRuntime={refreshRuntimeStatus}
+              />
               <EventStream project={selected} events={events[selected.id] ?? []} />
               <Composer
                 project={selected}
                 models={runtime.models}
                 settings={settings}
                 imageGenerationAvailable={imageGenerationAvailable}
-                disabled={
-                  runtime.state !== 'ready' ||
-                  !runtime.account ||
-                  !imageGenerationAvailable
-                }
+                disabled={Boolean(buildBlockReason)}
+                disabledReason={buildBlockReason}
                 onRun={runProject}
                 onStop={stopProject}
               />
@@ -335,11 +438,29 @@ export function App() {
               onError={setError}
             />
           </div>
-        ) : (
-          <EmptyWorkspace
+        ) : activeView === 'projects' ? (
+          <ProjectLibrary
+            projects={projects}
+            onCreate={() => openCreate()}
+            onOpen={openProject}
+            onReveal={(project) => void window.loopseed.revealProject(project.id)}
+          />
+        ) : activeView === 'personal' ? (
+          <PersonalPage
+            settings={settings}
             runtime={runtime}
-            projectCount={projects.length}
-            onCreate={() => setShowCreate(true)}
+            projects={projects}
+            onSaved={setSettings}
+            onRuntime={setRuntime}
+            onOpenAdvanced={() => setShowSettings(true)}
+          />
+        ) : (
+          <DashboardHome
+            runtime={runtime}
+            projects={projects}
+            onCreate={openCreate}
+            onSelect={openProject}
+            onSettings={() => setShowSettings(true)}
           />
         )}
       </main>
@@ -348,9 +469,16 @@ export function App() {
         <NewProjectModal
           defaultDirectory={settings.defaultWorkspace}
           defaultModel={settings.defaultModel}
+          defaultFrameRate={settings.defaultTargetFrameRate}
+          initialIdea={newProjectIdea}
           imageGenerationAvailable={imageGenerationAvailable}
+          autoStartAvailable={autoStartAvailable}
+          autoStartMessage={autoStartMessage}
           models={runtime.models}
-          onClose={() => setShowCreate(false)}
+          onClose={() => {
+            setShowCreate(false);
+            setNewProjectIdea('');
+          }}
           onCreate={createProject}
         />
       ) : null}
@@ -383,38 +511,6 @@ export function App() {
         </div>
       ) : null}
     </div>
-  );
-}
-
-function EmptyWorkspace({
-  runtime,
-  projectCount,
-  onCreate,
-}: {
-  runtime: RuntimeStatus;
-  projectCount: number;
-  onCreate: () => void;
-}) {
-  return (
-    <section className="empty-workspace">
-      <div className="empty-sequence" aria-hidden="true">
-        <span>IDEA</span><i /><span>BUILD</span><i /><span>PLAY</span>
-      </div>
-      <span className="eyebrow">PLANT AN IDEA · GROW A WORLD</span>
-      <h1>种下一个想法，<br />长成可玩的世界。</h1>
-      <p>
-        LoopSeed 让 Codex 在受控项目目录中完成策划、工程搭建、代码实现和持续验证。
-      </p>
-      <button className="hero-button" type="button" onClick={onCreate}>
-        <Sparkles size={16} /> 种下新创意 <ArrowRight size={15} />
-      </button>
-      <dl className="home-metrics">
-        <div><dt>PIPELINE</dt><dd>8 个制作阶段</dd></div>
-        <div><dt>RUNTIME</dt><dd>{runtime.state === 'ready' ? 'Codex 已就绪' : '需要检查'}</dd></div>
-        <div><dt>MEDIA</dt><dd>{runtime.capabilities.imageGeneration || runtime.capabilities.externalImageGeneration ? '图片 · 音频 · 3D' : '音频 · 3D'}</dd></div>
-        <div><dt>PROJECTS</dt><dd>{projectCount} 个本地项目</dd></div>
-      </dl>
-    </section>
   );
 }
 

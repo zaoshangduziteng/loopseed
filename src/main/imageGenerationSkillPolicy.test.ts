@@ -49,7 +49,7 @@ describe('required ImageGen skill policy', () => {
 
   it('does not accept an enabled ImageGen skill from outside the app-private Codex home', async () => {
     const fixture = await createFixture();
-    const otherRoot = await mkdtemp(join(tmpdir(), 'noobi-other-imagegen-'));
+    const otherRoot = await mkdtemp(join(tmpdir(), 'loopseed-other-imagegen-'));
     roots.push(otherRoot);
     const otherSkill = join(otherRoot, 'SKILL.md');
     await writeFile(otherSkill, '# other imagegen\n');
@@ -87,7 +87,7 @@ describe('required ImageGen skill policy', () => {
 });
 
 async function createFixture(): Promise<{ status: RuntimeStatus; skillPath: string }> {
-  const root = await mkdtemp(join(tmpdir(), 'noobi-imagegen-policy-'));
+  const root = await mkdtemp(join(tmpdir(), 'loopseed-imagegen-policy-'));
   roots.push(root);
   const skillPath = join(root, 'skills', '.system', 'imagegen', 'SKILL.md');
   await mkdir(join(root, 'skills', '.system', 'imagegen'), { recursive: true });

@@ -6,7 +6,7 @@ import { CodexAppServer } from '../src/main/codexAppServer.js';
 import { createWorkspaceTemplate } from '../src/main/workspaceTemplate.js';
 import { prepareSmokeHome } from './smokeHome.js';
 
-const workspace = await mkdtemp(join(tmpdir(), 'noobi-image-smoke-'));
+const workspace = await mkdtemp(join(tmpdir(), 'loopseed-image-smoke-'));
 const smokeHome = await prepareSmokeHome();
 const runtime = new CodexAppServer({ codexHome: smokeHome.path });
 const assetStore = new AssetStore();
@@ -28,7 +28,7 @@ try {
   await createWorkspaceTemplate(workspace, {
     id: 'image-smoke',
     name: 'Image Smoke',
-    idea: 'Verify Codex ImageGen and Noobi workspace ingestion end to end.',
+    idea: 'Verify Codex ImageGen and LoopSeed workspace ingestion end to end.',
     createdAt: new Date().toISOString(),
     model: null,
   });
@@ -77,11 +77,11 @@ try {
     provider: 'codex-imagegen',
   });
   if (asset.kind !== 'image' || asset.source !== 'generated') {
-    throw new Error('Noobi did not ingest the generated image as a project asset.');
+    throw new Error('LoopSeed did not ingest the generated image as a project asset.');
   }
 
   process.stdout.write(
-    `Noobi ImageGen smoke passed: ${model.displayName}; ${asset.relativePath}; ${asset.size} bytes\n`,
+    `LoopSeed ImageGen smoke passed: ${model.displayName}; ${asset.relativePath}; ${asset.size} bytes\n`,
   );
 } finally {
   await runtime.stop().catch(() => undefined);

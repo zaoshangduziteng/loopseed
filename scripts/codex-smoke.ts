@@ -4,7 +4,7 @@ import { tmpdir } from 'node:os';
 import { CodexAppServer } from '../src/main/codexAppServer.js';
 import { prepareSmokeHome } from './smokeHome.js';
 
-const workspace = await mkdtemp(join(tmpdir(), 'noobi-app-server-smoke-'));
+const workspace = await mkdtemp(join(tmpdir(), 'loopseed-app-server-smoke-'));
 const smokeHome = await prepareSmokeHome();
 const runtime = new CodexAppServer({ codexHome: smokeHome.path });
 
@@ -34,11 +34,11 @@ try {
     effort: model.efforts.includes('low') ? 'low' : model.defaultEffort,
     approvalPolicy: 'never',
     prompt:
-      'Create a UTF-8 text file named codex-smoke.txt in the current workspace. Its exact contents must be NOOBI_APP_SERVER_OK with no trailing newline. Then reply only DONE.',
+      'Create a UTF-8 text file named codex-smoke.txt in the current workspace. Its exact contents must be LOOPSEED_APP_SERVER_OK with no trailing newline. Then reply only DONE.',
   });
 
   const content = await readFile(join(workspace, 'codex-smoke.txt'), 'utf8');
-  if (content !== 'NOOBI_APP_SERVER_OK') {
+  if (content !== 'LOOPSEED_APP_SERVER_OK') {
     throw new Error(`Smoke artifact did not match. Received ${JSON.stringify(content)}.`);
   }
   if (result.status !== 'completed') {
@@ -46,7 +46,7 @@ try {
   }
 
   process.stdout.write(
-    `Noobi Codex smoke passed: ${status.version ?? 'unknown version'}, ${model.displayName}, ${threadId}\n`,
+    `LoopSeed Codex smoke passed: ${status.version ?? 'unknown version'}, ${model.displayName}, ${threadId}\n`,
   );
 } finally {
   await runtime.stop().catch(() => undefined);

@@ -4,9 +4,9 @@ import { tmpdir } from 'node:os';
 import { afterEach, describe, expect, it } from 'vitest';
 import {
   createWorkspaceTemplate,
-  NOOBI_HOST_RUNTIME_POLICY_END,
-  NOOBI_HOST_RUNTIME_POLICY_START,
-  NOOBI_HOST_RUNTIME_POLICY_VERSION,
+  LOOPSEED_HOST_RUNTIME_POLICY_END,
+  LOOPSEED_HOST_RUNTIME_POLICY_START,
+  LOOPSEED_HOST_RUNTIME_POLICY_VERSION,
   synchronizeWorkspaceHostPolicy,
 } from './workspaceTemplate.js';
 
@@ -20,7 +20,7 @@ afterEach(async () => {
 
 describe('createWorkspaceTemplate', () => {
   it('creates a playable project with local Agent instructions', async () => {
-    const root = await mkdtemp(join(tmpdir(), 'noobi-template-'));
+    const root = await mkdtemp(join(tmpdir(), 'loopseed-template-'));
     temporaryRoots.push(root);
     await createWorkspaceTemplate(root, {
       id: 'project-template',
@@ -36,8 +36,8 @@ describe('createWorkspaceTemplate', () => {
       'small playable vertical slice',
     );
     await expect(
-      readFile(join(root, '.codex/skills/noobi-game-builder/SKILL.md'), 'utf8'),
-    ).resolves.toContain('Noobi Game Builder');
+      readFile(join(root, '.codex/skills/loopseed-game-builder/SKILL.md'), 'utf8'),
+    ).resolves.toContain('LoopSeed Game Builder');
 
     const manifest = JSON.parse(
       await readFile(join(root, 'public/assets/asset-pack.json'), 'utf8'),
@@ -50,8 +50,8 @@ describe('createWorkspaceTemplate', () => {
     });
 
     const agents = await readFile(join(root, 'AGENTS.md'), 'utf8');
-    expect(agents).toContain('noobi_image_generate');
-    expect(agents).toContain('host-trusted generated image is required for every Noobi.ai game');
+    expect(agents).toContain('loopseed_image_generate');
+    expect(agents).toContain('host-trusted generated image is required for every LoopSeed game');
     expect(agents).toContain('Codex ImageGen fallback');
     expect(agents).toContain('visibly loaded by the running game');
     expect(agents).toContain('does not waive the generated-image requirement');
@@ -59,31 +59,31 @@ describe('createWorkspaceTemplate', () => {
     expect(agents).toContain('choose `generate`, `reuse`, or `not-needed`');
     expect(agents).toContain('Do not regenerate an already suitable animation asset');
     expect(agents).toContain('real animation clip from a self-contained rigged GLB');
-    expect(agents).toContain('noobi_audio_synthesize');
-    expect(agents).toContain('noobi_audio_generate');
+    expect(agents).toContain('loopseed_audio_synthesize');
+    expect(agents).toContain('loopseed_audio_generate');
     expect(agents).toContain('must set an explicit `purpose`');
     expect(agents).toContain('`music`, `speech`, `vocal-sfx`, `sfx`, or `ambience`');
     expect(agents).toContain('Do not claim MiniMax generates generic game SFX or ambience');
     expect(agents).toContain('gunshots, explosions');
     expect(agents).toContain('`procedural-audio`');
-    expect(agents).toContain('noobi_model3d_generate');
+    expect(agents).toContain('loopseed_model3d_generate');
     expect(agents).toContain('self-contained GLB 2.0');
     expect(agents).toContain('playable vertical slices');
     expect(agents).toContain('host-selected production target is **120 FPS**');
     expect(agents).toContain('targetFps=120');
     expect(agents).toContain('does not require 120 unique bitmap poses');
     expect(agents).toContain('Replace, resample, retag, or reselect');
-    expect(agents.startsWith(NOOBI_HOST_RUNTIME_POLICY_START)).toBe(true);
-    expect(occurrences(agents, NOOBI_HOST_RUNTIME_POLICY_START)).toBe(1);
-    expect(agents).toContain('`.noobi/project.json` field `targetFrameRate=120` is authoritative');
+    expect(agents.startsWith(LOOPSEED_HOST_RUNTIME_POLICY_START)).toBe(true);
+    expect(occurrences(agents, LOOPSEED_HOST_RUNTIME_POLICY_START)).toBe(1);
+    expect(agents).toContain('`.loopseed/project.json` field `targetFrameRate=120` is authoritative');
     expectManagedMediaPolicy(agents);
 
     const skill = await readFile(
-      join(root, '.codex/skills/noobi-game-builder/SKILL.md'),
+      join(root, '.codex/skills/loopseed-game-builder/SKILL.md'),
       'utf8',
     );
     expect(skill).toContain('public/assets/asset-pack.json');
-    expect(skill).toContain('noobi_asset_register');
+    expect(skill).toContain('loopseed_asset_register');
     expect(skill).toContain('MiniMax `music` to its Music model');
     expect(skill).toContain('`speech`/`vocal-sfx` to its Speech model');
     expect(skill).toContain('A `purpose` of `sfx` or `ambience` intentionally returns `procedural-audio`');
@@ -103,10 +103,10 @@ describe('createWorkspaceTemplate', () => {
     expect(skill).toContain('sourceAnimationFps');
     expect(skill).toContain('Never duplicate frames merely to claim 120 FPS');
     expect(skill).toContain('bounded fixed-step accumulator at 120 Hz');
-    expect(skill.startsWith('---\nname: noobi-game-builder')).toBe(true);
-    expect(occurrences(skill, NOOBI_HOST_RUNTIME_POLICY_START)).toBe(1);
-    expect(skill.indexOf(NOOBI_HOST_RUNTIME_POLICY_START)).toBeLessThan(
-      skill.indexOf('# Noobi Game Builder'),
+    expect(skill.startsWith('---\nname: loopseed-game-builder')).toBe(true);
+    expect(occurrences(skill, LOOPSEED_HOST_RUNTIME_POLICY_START)).toBe(1);
+    expect(skill.indexOf(LOOPSEED_HOST_RUNTIME_POLICY_START)).toBeLessThan(
+      skill.indexOf('# LoopSeed Game Builder'),
     );
     expectManagedMediaPolicy(skill);
 
@@ -122,13 +122,13 @@ describe('createWorkspaceTemplate', () => {
     expect(design).toContain('target-specific animation asset is tagged for 120 FPS');
 
     const readme = await readFile(join(root, 'README.md'), 'utf8');
-    expect(readme).toContain('Every Noobi.ai run includes an animation needs assessment');
+    expect(readme).toContain('Every LoopSeed run includes an animation needs assessment');
     expect(readme).toContain('verify and reuse the existing frame set/sprite sheet');
     expect(readme).toContain('Actual rigged 3D characters use real GLB animation clips');
     expect(readme).toContain('This project targets **120 FPS**');
 
     const metadata = JSON.parse(
-      await readFile(join(root, '.noobi/project.json'), 'utf8'),
+      await readFile(join(root, '.loopseed/project.json'), 'utf8'),
     ) as Record<string, unknown>;
     expect(metadata.targetFrameRate).toBe(120);
 
@@ -140,7 +140,7 @@ describe('createWorkspaceTemplate', () => {
   });
 
   it('atomically synchronizes authoritative FPS metadata and managed policy blocks without replacing user content', async () => {
-    const root = await mkdtemp(join(tmpdir(), 'noobi-policy-sync-'));
+    const root = await mkdtemp(join(tmpdir(), 'loopseed-policy-sync-'));
     temporaryRoots.push(root);
     const project = {
       id: 'project-policy-sync',
@@ -153,7 +153,7 @@ describe('createWorkspaceTemplate', () => {
     await createWorkspaceTemplate(root, project);
 
     const agentsPath = join(root, 'AGENTS.md');
-    const skillPath = join(root, '.codex/skills/noobi-game-builder/SKILL.md');
+    const skillPath = join(root, '.codex/skills/loopseed-game-builder/SKILL.md');
     await appendFile(agentsPath, '\nUSER_AGENTS_SENTINEL\n', 'utf8');
     await appendFile(skillPath, '\nUSER_SKILL_SENTINEL\n', 'utf8');
     const agentsBefore = await readFile(agentsPath, 'utf8');
@@ -165,7 +165,7 @@ describe('createWorkspaceTemplate', () => {
     });
 
     const metadata = JSON.parse(
-      await readFile(join(root, '.noobi/project.json'), 'utf8'),
+      await readFile(join(root, '.loopseed/project.json'), 'utf8'),
     ) as Record<string, unknown>;
     expect(metadata).toMatchObject({
       id: project.id,
@@ -177,17 +177,17 @@ describe('createWorkspaceTemplate', () => {
     const agentsAfter = await readFile(agentsPath, 'utf8');
     const skillAfter = await readFile(skillPath, 'utf8');
     for (const content of [agentsAfter, skillAfter]) {
-      expect(occurrences(content, NOOBI_HOST_RUNTIME_POLICY_START)).toBe(1);
-      expect(occurrences(content, NOOBI_HOST_RUNTIME_POLICY_END)).toBe(1);
+      expect(occurrences(content, LOOPSEED_HOST_RUNTIME_POLICY_START)).toBe(1);
+      expect(occurrences(content, LOOPSEED_HOST_RUNTIME_POLICY_END)).toBe(1);
       expect(content).toContain('Current host-selected target: **120 FPS**');
       expect(content).toContain('`targetFrameRate=120` is authoritative');
       expect(content).toContain('overrides any lower, potentially stale text');
       expectManagedMediaPolicy(content);
     }
-    expect(agentsAfter.startsWith(NOOBI_HOST_RUNTIME_POLICY_START)).toBe(true);
-    expect(skillAfter.startsWith('---\nname: noobi-game-builder')).toBe(true);
-    expect(skillAfter.indexOf(NOOBI_HOST_RUNTIME_POLICY_START)).toBeLessThan(
-      skillAfter.indexOf('# Noobi Game Builder'),
+    expect(agentsAfter.startsWith(LOOPSEED_HOST_RUNTIME_POLICY_START)).toBe(true);
+    expect(skillAfter.startsWith('---\nname: loopseed-game-builder')).toBe(true);
+    expect(skillAfter.indexOf(LOOPSEED_HOST_RUNTIME_POLICY_START)).toBeLessThan(
+      skillAfter.indexOf('# LoopSeed Game Builder'),
     );
     expect(withoutManagedPolicy(agentsAfter)).toBe(withoutManagedPolicy(agentsBefore));
     expect(withoutManagedPolicy(skillAfter)).toBe(withoutManagedPolicy(skillBefore));
@@ -203,7 +203,7 @@ describe('createWorkspaceTemplate', () => {
   });
 
   it('migrates the versioned media contract into legacy instructions without replacing user content', async () => {
-    const root = await mkdtemp(join(tmpdir(), 'noobi-policy-legacy-'));
+    const root = await mkdtemp(join(tmpdir(), 'loopseed-policy-legacy-'));
     temporaryRoots.push(root);
     const project = {
       id: 'project-policy-legacy',
@@ -216,11 +216,11 @@ describe('createWorkspaceTemplate', () => {
     await createWorkspaceTemplate(root, project);
 
     const agentsPath = join(root, 'AGENTS.md');
-    const skillPath = join(root, '.codex/skills/noobi-game-builder/SKILL.md');
+    const skillPath = join(root, '.codex/skills/loopseed-game-builder/SKILL.md');
     const legacyAgents = '# User-owned legacy agents\n\nUSER_AGENTS_LEGACY_SENTINEL\n';
     const skillFrontMatter = [
       '---',
-      'name: noobi-game-builder',
+      'name: loopseed-game-builder',
       'description: User-maintained legacy skill.',
       '---',
     ].join('\n');
@@ -236,25 +236,25 @@ describe('createWorkspaceTemplate', () => {
     const agentsAfter = await readFile(agentsPath, 'utf8');
     const skillAfter = await readFile(skillPath, 'utf8');
     for (const content of [agentsAfter, skillAfter]) {
-      expect(occurrences(content, NOOBI_HOST_RUNTIME_POLICY_START)).toBe(1);
-      expect(occurrences(content, NOOBI_HOST_RUNTIME_POLICY_END)).toBe(1);
+      expect(occurrences(content, LOOPSEED_HOST_RUNTIME_POLICY_START)).toBe(1);
+      expect(occurrences(content, LOOPSEED_HOST_RUNTIME_POLICY_END)).toBe(1);
       expectManagedMediaPolicy(content);
     }
-    expect(agentsAfter.startsWith(NOOBI_HOST_RUNTIME_POLICY_START)).toBe(true);
+    expect(agentsAfter.startsWith(LOOPSEED_HOST_RUNTIME_POLICY_START)).toBe(true);
     expect(agentsAfter.endsWith(legacyAgents)).toBe(true);
-    expect(skillAfter.startsWith(`${skillFrontMatter}\n\n${NOOBI_HOST_RUNTIME_POLICY_START}`)).toBe(true);
+    expect(skillAfter.startsWith(`${skillFrontMatter}\n\n${LOOPSEED_HOST_RUNTIME_POLICY_START}`)).toBe(true);
     expect(skillAfter.endsWith(legacySkillBody)).toBe(true);
     expect(occurrences(agentsAfter, 'USER_AGENTS_LEGACY_SENTINEL')).toBe(1);
     expect(occurrences(skillAfter, 'USER_SKILL_LEGACY_SENTINEL')).toBe(1);
     const metadata = JSON.parse(
-      await readFile(join(root, '.noobi/project.json'), 'utf8'),
+      await readFile(join(root, '.loopseed/project.json'), 'utf8'),
     ) as Record<string, unknown>;
     expect(metadata.targetFrameRate).toBe(60);
   });
 
   it('fails closed on a workspace symlink before changing authoritative metadata', async () => {
-    const root = await mkdtemp(join(tmpdir(), 'noobi-policy-symlink-'));
-    const externalRoot = await mkdtemp(join(tmpdir(), 'noobi-policy-external-'));
+    const root = await mkdtemp(join(tmpdir(), 'loopseed-policy-symlink-'));
+    const externalRoot = await mkdtemp(join(tmpdir(), 'loopseed-policy-external-'));
     temporaryRoots.push(root, externalRoot);
     const project = {
       id: 'project-policy-symlink',
@@ -277,13 +277,13 @@ describe('createWorkspaceTemplate', () => {
 
     expect(await readFile(externalAgents, 'utf8')).toBe('EXTERNAL_SENTINEL\n');
     const metadata = JSON.parse(
-      await readFile(join(root, '.noobi/project.json'), 'utf8'),
+      await readFile(join(root, '.loopseed/project.json'), 'utf8'),
     ) as Record<string, unknown>;
     expect(metadata.targetFrameRate).toBe(30);
   });
 
   it('refuses to overwrite an existing workspace template', async () => {
-    const root = await mkdtemp(join(tmpdir(), 'noobi-template-'));
+    const root = await mkdtemp(join(tmpdir(), 'loopseed-template-'));
     temporaryRoots.push(root);
     const project = {
       id: 'project-existing',
@@ -304,14 +304,14 @@ function occurrences(source: string, needle: string): number {
 
 function expectManagedMediaPolicy(source: string): void {
   const policy = managedPolicyOf(source);
-  expect(policy).toContain(`managed, v${NOOBI_HOST_RUNTIME_POLICY_VERSION}`);
+  expect(policy).toContain(`managed, v${LOOPSEED_HOST_RUNTIME_POLICY_VERSION}`);
   expect(policy).toContain(
-    `Managed host policy version: \`${NOOBI_HOST_RUNTIME_POLICY_VERSION}\``,
+    `Managed host policy version: \`${LOOPSEED_HOST_RUNTIME_POLICY_VERSION}\``,
   );
   expect(policy).toContain('enabled MiniMax Music service');
   expect(policy).toContain('at least one MiniMax-generated music track');
   expect(policy).toContain('planning role cannot call its tool');
-  expect(policy).toContain('`noobi_audio_generate` with `purpose=music`');
+  expect(policy).toContain('`loopseed_audio_generate` with `purpose=music`');
   expect(policy).toContain('exist under `public/assets/audio/`');
   expect(policy).toContain('loaded and played by production game code');
   expect(policy).toContain('Never silently substitute Web Audio');
@@ -320,19 +320,19 @@ function expectManagedMediaPolicy(source: string): void {
 }
 
 function managedPolicyOf(source: string): string {
-  const start = source.indexOf(NOOBI_HOST_RUNTIME_POLICY_START);
-  const end = source.indexOf(NOOBI_HOST_RUNTIME_POLICY_END, start);
+  const start = source.indexOf(LOOPSEED_HOST_RUNTIME_POLICY_START);
+  const end = source.indexOf(LOOPSEED_HOST_RUNTIME_POLICY_END, start);
   if (start < 0 || end < 0) throw new Error('Managed policy is missing in test fixture');
-  return source.slice(start, end + NOOBI_HOST_RUNTIME_POLICY_END.length);
+  return source.slice(start, end + LOOPSEED_HOST_RUNTIME_POLICY_END.length);
 }
 
 function withoutManagedPolicy(source: string): string {
   let result = source;
   while (true) {
-    const start = result.indexOf(NOOBI_HOST_RUNTIME_POLICY_START);
+    const start = result.indexOf(LOOPSEED_HOST_RUNTIME_POLICY_START);
     if (start < 0) return result;
-    const end = result.indexOf(NOOBI_HOST_RUNTIME_POLICY_END, start);
+    const end = result.indexOf(LOOPSEED_HOST_RUNTIME_POLICY_END, start);
     if (end < 0) throw new Error('Malformed managed policy in test fixture');
-    result = result.slice(0, start) + result.slice(end + NOOBI_HOST_RUNTIME_POLICY_END.length);
+    result = result.slice(0, start) + result.slice(end + LOOPSEED_HOST_RUNTIME_POLICY_END.length);
   }
 }

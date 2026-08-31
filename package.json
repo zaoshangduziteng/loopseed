@@ -5,10 +5,11 @@
   "type": "module",
   "description": "LoopSeed — grow an idea into a playable world with Codex",
   "author": "LoopSeed",
+  "license": "MIT",
   "main": "dist/main/main.js",
   "scripts": {
     "clean": "node scripts/clean.mjs",
-    "dev": "concurrently -k \"vite --host 127.0.0.1 --port 5174\" \"tsc -p tsconfig.main.json --watch --preserveWatchOutput\" \"wait-on tcp:5174 file:dist/main/main.js file:dist/main/preload.cjs && cross-env NOOBI_RENDERER_URL=http://127.0.0.1:5174 electron .\"",
+    "dev": "concurrently -k \"vite --host 127.0.0.1 --port 5174\" \"tsc -p tsconfig.main.json --watch --preserveWatchOutput\" \"wait-on tcp:5174 file:dist/main/main.js file:dist/main/preload.cjs && cross-env LOOPSEED_RENDERER_URL=http://127.0.0.1:5174 electron .\"",
     "typecheck": "tsc --noEmit -p tsconfig.renderer.json && tsc --noEmit -p tsconfig.main.json",
     "build:renderer": "vite build",
     "build:main": "tsc -p tsconfig.main.json",
@@ -20,7 +21,7 @@
     "smoke:harness": "tsx scripts/harness-smoke.ts",
     "smoke:media": "tsx scripts/media-smoke.ts",
     "smoke:image": "tsx scripts/image-smoke.ts",
-    "smoke:ui": "npm run build && cross-env NOOBI_SMOKE_CAPTURE=.noobi-smoke/workbench.png electron .",
+    "smoke:ui": "npm run build && cross-env LOOPSEED_SMOKE_CAPTURE=.loopseed-smoke/workbench.png electron .",
     "verify": "npm run typecheck && npm run test && npm run build",
     "package:mac": "npm run build && electron-builder --mac dmg --publish never"
   },
@@ -67,7 +68,7 @@
       "target": ["dmg"]
     },
     "dmg": {
-      "backgroundColor": "#3c315b",
+      "backgroundColor": "#c8f4ff",
       "title": "LoopSeed ${version}"
     }
   }

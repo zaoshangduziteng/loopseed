@@ -8,7 +8,7 @@ import { ImageGenerationAttestationStore } from '../src/main/imageGenerationAtte
 import { createWorkspaceTemplate } from '../src/main/workspaceTemplate.js';
 import { prepareSmokeHome } from './smokeHome.js';
 
-const workspace = await mkdtemp(join(tmpdir(), 'noobi-harness-smoke-'));
+const workspace = await mkdtemp(join(tmpdir(), 'loopseed-harness-smoke-'));
 const smokeHome = await prepareSmokeHome();
 const runtime = new CodexAppServer({ codexHome: smokeHome.path });
 const harness = new GameHarness(runtime);
@@ -61,7 +61,7 @@ try {
   await createWorkspaceTemplate(workspace, {
     id: 'harness-smoke',
     name: 'Harness Smoke',
-    idea: 'A temporary project used only to prove the Noobi host harness end to end.',
+    idea: 'A temporary project used only to prove the LoopSeed host harness end to end.',
     createdAt: new Date().toISOString(),
     model: null,
   });
@@ -86,12 +86,12 @@ try {
     model: model.model,
     effort: model.efforts.includes('low') ? 'low' : model.defaultEffort,
     prompt:
-      'Perform one bounded full game-harness integration check. Generate one simple cyan energy-pickup image, ingest and visibly use it in the starter game, then create harness-smoke.txt with exact contents NOOBI_GAME_HARNESS_OK and no trailing newline. Run the production build and verify the asset path resolves.',
+      'Perform one bounded full game-harness integration check. Generate one simple cyan energy-pickup image, ingest and visibly use it in the starter game, then create harness-smoke.txt with exact contents LOOPSEED_GAME_HARNESS_OK and no trailing newline. Run the production build and verify the asset path resolves.',
     imageGenerationSkill: { name: 'imagegen', path: imageGenerationSkillPath },
   });
   await Promise.all(imageIngestions);
   const artifact = await readFile(join(workspace, 'harness-smoke.txt'), 'utf8');
-  if (artifact !== 'NOOBI_GAME_HARNESS_OK') {
+  if (artifact !== 'LOOPSEED_GAME_HARNESS_OK') {
     throw new Error(`Harness artifact did not match: ${JSON.stringify(artifact)}`);
   }
   if (!result.threadId || result.implementation.status !== 'completed') {
@@ -111,7 +111,7 @@ try {
   }
 
   process.stdout.write(
-    `Noobi harness smoke passed: ${model.displayName}; review=${result.review.verdict}; repair=${result.repaired}; phases=${phases.join('>')}\n`,
+    `LoopSeed harness smoke passed: ${model.displayName}; review=${result.review.verdict}; repair=${result.repaired}; phases=${phases.join('>')}\n`,
   );
 } finally {
   await runtime.stop().catch(() => undefined);

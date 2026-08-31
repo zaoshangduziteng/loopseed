@@ -107,6 +107,7 @@ export interface AppSettings {
   defaultWorkspace: string;
   defaultModel: string | null;
   defaultEffort: string;
+  defaultTargetFrameRate: TargetFrameRate;
   theme: 'dark' | 'light';
 }
 
@@ -296,7 +297,7 @@ export interface LoginStartResult {
   userCode?: string;
 }
 
-export interface NoobiApi {
+export interface LoopSeedApi {
   bootstrap(): Promise<BootstrapPayload>;
   refreshRuntime(): Promise<RuntimeStatus>;
   startLogin(): Promise<LoginStartResult>;

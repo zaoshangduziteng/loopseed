@@ -24,6 +24,7 @@ import type {
   RuntimeStatus,
 } from '../../shared/contracts';
 import { runtimeLabel, toMessage } from '../ui';
+import { FrameRateControl } from './FrameRateControl';
 import { Modal } from './Modal';
 import {
   McpSettings,
@@ -83,7 +84,7 @@ export function SettingsModal({
     setBusy(true);
     setMessage('');
     try {
-      onRuntime(await window.noobi.refreshRuntime());
+      onRuntime(await window.loopseed.refreshRuntime());
       setMessage('运行时状态已刷新。');
     } catch (error) {
       setMessage(toMessage(error));
@@ -96,7 +97,7 @@ export function SettingsModal({
     setBusy(true);
     setMessage('');
     try {
-      const result = await window.noobi.startLogin();
+      const result = await window.loopseed.startLogin();
       setLogin(result);
       setMessage('请在官方页面完成 Codex 登录。');
     } catch (error) {
@@ -110,7 +111,7 @@ export function SettingsModal({
     setBusy(true);
     setMessage('');
     try {
-      onRuntime(await window.noobi.logout());
+      onRuntime(await window.loopseed.logout());
       setLogin(null);
       setMessage('已退出 Codex 账户。');
     } catch (error) {
@@ -121,7 +122,7 @@ export function SettingsModal({
   }
 
   async function chooseDirectory() {
-    const directory = await window.noobi.chooseDirectory();
+    const directory = await window.loopseed.chooseDirectory();
     if (directory) setDraft((current) => ({ ...current, defaultWorkspace: directory }));
   }
 
@@ -129,7 +130,7 @@ export function SettingsModal({
     setBusy(true);
     setMessage('');
     try {
-      const saved = await window.noobi.saveSettings(draft);
+      const saved = await window.loopseed.saveSettings(draft);
       setDraft(saved);
       onSaved(saved);
       setMessage('设置已保存。');
@@ -262,6 +263,13 @@ export function SettingsModal({
                     ))}
                   </select>
                 </label>
+                <FrameRateControl
+                  value={draft.defaultTargetFrameRate}
+                  onChange={(defaultTargetFrameRate) => setDraft((current) => ({
+                    ...current,
+                    defaultTargetFrameRate,
+                  }))}
+                />
               </div>
             </section>
           ) : null}

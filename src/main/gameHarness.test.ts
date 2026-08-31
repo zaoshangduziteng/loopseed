@@ -186,7 +186,7 @@ describe('game harness required ImageGen contract', () => {
     expect(prompt).toContain('generation="generate"');
     expect(prompt).toContain('generation="reuse"');
     expect(prompt).toContain('generation="not-needed"');
-    expect(prompt).toContain('Implementer MUST use noobi_image_generate');
+    expect(prompt).toContain('Implementer MUST use loopseed_image_generate');
     expect(prompt).toContain('at least two usable, distinct keyframes or one sprite sheet');
     expect(prompt).toContain('subject design, art style, palette, lighting, scale, frame dimensions, anchor, and view/camera angle');
     expect(prompt).toContain('actual frame selection or sprite-sheet cropping');
@@ -251,7 +251,7 @@ describe('game harness required ImageGen contract', () => {
 
     expect(runtime.turns).toHaveLength(3);
     expect(runtime.turns[0]?.prompt).toContain('<host_audio_attestation status="missing">');
-    expect(runtime.turns[0]?.prompt).toContain('MUST call noobi_audio_generate once with purpose="music"');
+    expect(runtime.turns[0]?.prompt).toContain('MUST call loopseed_audio_generate once with purpose="music"');
     expect(runtime.turns[0]?.prompt).toContain('A failed call is a blocker');
     expect(runtime.turns[1]?.prompt).toContain('<host_audio_attestation status="missing">');
     expect(runtime.turns[2]?.prompt).toContain('<host_audio_attestation status="trusted-and-referenced">');

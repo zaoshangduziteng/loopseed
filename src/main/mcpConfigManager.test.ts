@@ -23,13 +23,13 @@ describe('McpConfigManager', () => {
       id: 'asset_api',
       transport: 'http',
       url: 'https://mcp.example.test/v1',
-      bearerTokenEnvVar: 'NOOBI_ASSET_MCP_TOKEN',
+      bearerTokenEnvVar: 'LOOPSEED_ASSET_MCP_TOKEN',
       enabled: false,
     });
     expect(runtime.writeConfigValue).toHaveBeenCalledWith('mcp_servers.asset_api', {
       enabled: false,
       url: 'https://mcp.example.test/v1',
-      bearer_token_env_var: 'NOOBI_ASSET_MCP_TOKEN',
+      bearer_token_env_var: 'LOOPSEED_ASSET_MCP_TOKEN',
     });
     expect(runtime.reloadMcpServers).toHaveBeenCalledTimes(2);
   });

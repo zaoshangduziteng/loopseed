@@ -28,7 +28,7 @@ describe('procedural audio', () => {
   });
 
   it('writes only safe workspace-relative audio filenames', async () => {
-    const root = await mkdtemp(join(tmpdir(), 'noobi-audio-test-'));
+    const root = await mkdtemp(join(tmpdir(), 'loopseed-audio-test-'));
     roots.push(root);
     const result = await synthesizeProceduralWav({
       root,
@@ -50,8 +50,8 @@ describe('procedural audio', () => {
   });
 
   it('rejects a symlinked audio directory that leaves the workspace', async () => {
-    const root = await mkdtemp(join(tmpdir(), 'noobi-audio-root-'));
-    const outside = await mkdtemp(join(tmpdir(), 'noobi-audio-outside-'));
+    const root = await mkdtemp(join(tmpdir(), 'loopseed-audio-root-'));
+    const outside = await mkdtemp(join(tmpdir(), 'loopseed-audio-outside-'));
     roots.push(root, outside);
     await mkdir(join(root, 'public', 'assets'), { recursive: true });
     await symlink(outside, join(root, 'public', 'assets', 'audio'));
@@ -62,8 +62,8 @@ describe('procedural audio', () => {
   });
 
   it('does not create directories through a symlinked parent', async () => {
-    const root = await mkdtemp(join(tmpdir(), 'noobi-audio-parent-root-'));
-    const outside = await mkdtemp(join(tmpdir(), 'noobi-audio-parent-outside-'));
+    const root = await mkdtemp(join(tmpdir(), 'loopseed-audio-parent-root-'));
+    const outside = await mkdtemp(join(tmpdir(), 'loopseed-audio-parent-outside-'));
     roots.push(root, outside);
     await symlink(outside, join(root, 'public'));
 

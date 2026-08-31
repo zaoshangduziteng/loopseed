@@ -67,7 +67,7 @@ describe('PromptTemplateStore', () => {
 });
 
 async function makeFixture(): Promise<{ file: string }> {
-  const root = await mkdtemp(join(tmpdir(), 'noobi-prompt-templates-'));
+  const root = await mkdtemp(join(tmpdir(), 'loopseed-prompt-templates-'));
   roots.push(root);
   return { file: join(root, 'prompt-templates.json') };
 }

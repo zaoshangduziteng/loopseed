@@ -166,7 +166,7 @@ describe('ImageGenerationAttestationStore', () => {
 
   it('securely bootstraps pre-ledger assets from a same-name, byte-identical managed ImageGen output', async () => {
     const fixture = await makeFixture();
-    const generatedRoot = await mkdtemp(join(tmpdir(), 'noobi-generated-images-'));
+    const generatedRoot = await mkdtemp(join(tmpdir(), 'loopseed-generated-images-'));
     roots.push(generatedRoot);
     await mkdir(join(generatedRoot, 'thread-1'), { recursive: true });
     await writeFile(join(generatedRoot, 'thread-1/hero.png'), IMAGE);
@@ -190,8 +190,8 @@ describe('ImageGenerationAttestationStore', () => {
 
   it('does not follow symlinks while looking for migration proof', async () => {
     const fixture = await makeFixture();
-    const generatedRoot = await mkdtemp(join(tmpdir(), 'noobi-generated-images-'));
-    const outside = await mkdtemp(join(tmpdir(), 'noobi-generated-outside-'));
+    const generatedRoot = await mkdtemp(join(tmpdir(), 'loopseed-generated-images-'));
+    const outside = await mkdtemp(join(tmpdir(), 'loopseed-generated-outside-'));
     roots.push(generatedRoot, outside);
     await writeFile(join(outside, 'hero.png'), IMAGE);
     await symlink(outside, join(generatedRoot, 'thread-1'));
@@ -296,8 +296,8 @@ async function makeFixture(): Promise<{
     size: number;
   };
 }> {
-  const root = await mkdtemp(join(tmpdir(), 'noobi-attestation-project-'));
-  const userData = await mkdtemp(join(tmpdir(), 'noobi-attestation-user-data-'));
+  const root = await mkdtemp(join(tmpdir(), 'loopseed-attestation-project-'));
+  const userData = await mkdtemp(join(tmpdir(), 'loopseed-attestation-user-data-'));
   roots.push(root, userData);
   await mkdir(join(root, 'public/assets/images'), { recursive: true });
   await mkdir(join(root, 'src'), { recursive: true });
@@ -324,8 +324,8 @@ async function makeAudioFixture(): Promise<{
     size: number;
   };
 }> {
-  const root = await mkdtemp(join(tmpdir(), 'noobi-audio-attestation-project-'));
-  const userData = await mkdtemp(join(tmpdir(), 'noobi-audio-attestation-user-data-'));
+  const root = await mkdtemp(join(tmpdir(), 'loopseed-audio-attestation-project-'));
+  const userData = await mkdtemp(join(tmpdir(), 'loopseed-audio-attestation-user-data-'));
   roots.push(root, userData);
   await mkdir(join(root, 'public/assets/audio'), { recursive: true });
   await mkdir(join(root, 'src'), { recursive: true });

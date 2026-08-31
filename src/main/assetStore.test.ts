@@ -121,7 +121,7 @@ describe('AssetStore', () => {
 
   it('rejects symbolic-link asset directories and project traversal', async () => {
     const { root, sources } = await fixture();
-    const outside = await mkdtemp(join(tmpdir(), 'noobi-assets-outside-'));
+    const outside = await mkdtemp(join(tmpdir(), 'loopseed-assets-outside-'));
     roots.push(outside);
     await mkdir(join(root, 'public'), { recursive: true });
     await symlink(outside, join(root, 'public/assets'));
@@ -137,8 +137,8 @@ describe('AssetStore', () => {
 });
 
 async function fixture(): Promise<{ root: string; sources: string }> {
-  const root = await mkdtemp(join(tmpdir(), 'noobi-assets-project-'));
-  const sources = await mkdtemp(join(tmpdir(), 'noobi-assets-sources-'));
+  const root = await mkdtemp(join(tmpdir(), 'loopseed-assets-project-'));
+  const sources = await mkdtemp(join(tmpdir(), 'loopseed-assets-sources-'));
   roots.push(root, sources);
   return { root, sources };
 }

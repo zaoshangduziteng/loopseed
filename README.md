@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="src/renderer/assets/loopseed-app-icon.svg" width="112" alt="LoopSeed app icon">
+  <img src="src/renderer/assets/loopseed-logo.png" width="112" alt="LoopSeed app icon">
 </p>
 
 <h1 align="center">LoopSeed</h1>
@@ -104,7 +104,7 @@ Renderer 不直接获得 shell、任意文件系统或 `child_process` 能力。
 需要 Node.js、npm，以及可用的 ChatGPT/Codex 账户。
 
 ```bash
-git clone https://github.com/zaoshangduziteng/loopseed.git
+git clone <repository-url>
 cd loopseed
 npm install
 npm run dev
@@ -115,10 +115,10 @@ npm run dev
 默认使用 `@openai/codex` 安装的当前平台二进制，并回退到 ChatGPT App 或 PATH 中的 Codex。也可显式覆盖：
 
 ```bash
-NOOBI_CODEX_BIN=/absolute/path/to/codex npm run dev
+LOOPSEED_CODEX_BIN=/absolute/path/to/codex npm run dev
 ```
 
-`NOOBI_*` 环境变量和 `.noobi` 项目元数据作为与原始运行时的兼容层保留，不影响 LoopSeed 品牌和界面。
+`LOOPSEED_*` 环境变量和 `.loopseed` 项目元数据构成 LoopSeed 的内部运行时协议。
 
 ## 配置媒体服务
 
@@ -159,3 +159,7 @@ npm run package:mac
 - [产品功能拆解](docs/PRODUCT_FUNCTIONS.md)
 - [Codex App Server 架构](docs/ARCHITECTURE.md)
 - [Codex 源码阅读基线](docs/CODEX_SOURCE_NOTES.md)
+
+## 许可证
+
+[MIT](LICENSE) © LoopSeed Contributors

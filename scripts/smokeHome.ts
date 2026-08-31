@@ -14,14 +14,14 @@ export interface SmokeHome {
  * and the entire directory is deleted in the test's finally block.
  */
 export async function prepareSmokeHome(): Promise<SmokeHome> {
-  const explicit = process.env.NOOBI_SMOKE_CODEX_HOME?.trim();
+  const explicit = process.env.LOOPSEED_SMOKE_CODEX_HOME?.trim();
   if (explicit) {
-    if (!isAbsolute(explicit)) throw new Error('NOOBI_SMOKE_CODEX_HOME must be absolute');
+    if (!isAbsolute(explicit)) throw new Error('LOOPSEED_SMOKE_CODEX_HOME must be absolute');
     await mkdir(explicit, { recursive: true, mode: 0o700 });
     return { path: resolve(explicit), cleanup: async () => undefined };
   }
 
-  const directory = await mkdtemp(join(tmpdir(), 'noobi-codex-home-smoke-'));
+  const directory = await mkdtemp(join(tmpdir(), 'loopseed-codex-home-smoke-'));
   await chmod(directory, 0o700);
   const sourceHome = resolve(process.env.CODEX_HOME?.trim() || join(homedir(), '.codex'));
   try {
@@ -30,7 +30,7 @@ export async function prepareSmokeHome(): Promise<SmokeHome> {
   } catch (error) {
     await rm(directory, { recursive: true, force: true });
     throw new Error(
-      `Unable to prepare isolated Codex smoke authentication from ${sourceHome}. Sign in with Codex first or set NOOBI_SMOKE_CODEX_HOME.`,
+      `Unable to prepare isolated Codex smoke authentication from ${sourceHome}. Sign in with Codex first or set LOOPSEED_SMOKE_CODEX_HOME.`,
       { cause: error },
     );
   }

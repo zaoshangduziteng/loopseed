@@ -694,9 +694,9 @@ async function configuredStore(input: {
   endpoint?: string;
   apiKey: string;
 }): Promise<{ root: string; providerStore: MediaProviderStore }> {
-  const root = await mkdtemp(join(tmpdir(), 'noobi-generation-test-'));
+  const root = await mkdtemp(join(tmpdir(), 'loopseed-generation-test-'));
   roots.push(root);
-  const providerStore = new MediaProviderStore(join(root, '.noobi-private', 'providers.json'), fakeSecretCodec());
+  const providerStore = new MediaProviderStore(join(root, '.loopseed-private', 'providers.json'), fakeSecretCodec());
   await providerStore.init();
   await providerStore.upsert({ ...input, setActive: true });
   return { root, providerStore };

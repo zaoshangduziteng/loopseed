@@ -289,7 +289,7 @@ const MAX_API_KEY_LENGTH = 16_384;
 const MAX_SEALED_API_KEY_LENGTH = 128 * 1024;
 const MAX_TEXT_LENGTH = 500;
 // Newlines are forbidden in API keys, so a legacy raw key cannot be confused with a bound payload.
-const BOUND_API_KEY_PREFIX = 'noobi-media-provider-secret\nv1\n';
+const BOUND_API_KEY_PREFIX = 'loopseed-media-provider-secret\nv1\n';
 
 /**
  * App-private provider persistence. Public methods expose only redacted summaries;
