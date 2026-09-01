@@ -13,6 +13,8 @@
   <code>Electron</code> · <code>React</code> · <code>TypeScript</code> · <code>Codex App Server</code> · <code>macOS</code>
 </p>
 
+> **维护状态：** LoopSeed 已停止独立维护，后续功能与开发工作已并入 [Noobi.ai](https://github.com/Innate-Labs/Noobi.ai)。
+
 > LoopSeed 把 Codex 放进一条有边界的游戏制作管线：Planner 先拆解，Implementer 在项目目录中实现，Reviewer 独立检查，宿主最后验证素材、代码引用与可运行结果。
 
 ## 核心能力
